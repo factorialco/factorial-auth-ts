@@ -30,6 +30,7 @@
     "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "checks": "npm-run-all --parallel checks:*",
     "checks:lint": "oxlint",
@@ -43,12 +44,13 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "@typescript/native-preview": "7.0.0-dev.20260320.1",
+    "@vitest/coverage-v8": "^4.1.9",
     "npm-run-all2": "^9.0.2",
     "oxfmt": "0.28.0",
     "oxlint": "^1.0.0",
     "tsup": "^8.3.0",
     "typescript": "^5.9.0",
-    "vitest": "^3.0.0"
+    "vitest": "^4.1.9"
   },
   "engines": {
     "node": ">=20"
