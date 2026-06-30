@@ -39,7 +39,8 @@
     "checks:knip": "pnpm knip --no-config-hints"
   },
   "dependencies": {
-    "knip": "^6.23.0"
+    "knip": "^6.23.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
