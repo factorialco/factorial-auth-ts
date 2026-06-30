@@ -31,13 +31,19 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check"
+    "checks": "npm-run-all --parallel checks:*",
+    "checks:lint": "oxlint",
+    "checks:format": "oxfmt --check",
+    "checks:tsc": "tsgo --noEmit -p tsconfig.json",
+    "checks:knip": "pnpm knip --no-config-hints"
+  },
+  "dependencies": {
+    "knip": "^6.23.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "@typescript/native-preview": "7.0.0-dev.20260320.1",
+    "npm-run-all2": "^9.0.2",
     "oxfmt": "0.28.0",
     "oxlint": "^1.0.0",
     "tsup": "^8.3.0",

@@ -17,25 +17,28 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '22.14.0'
+          node-version: "22.14.0"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
         with:
           cache: true
-          cache_dependency_path: 'pnpm-lock.yaml'
+          cache_dependency_path: "pnpm-lock.yaml"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Typecheck
-        run: pnpm typecheck
+        run: pnpm check:tsc
 
       - name: Lint
-        run: pnpm lint
+        run: pnpm check:lint
 
       - name: Format check
-        run: pnpm fmt:check
+        run: pnpm check:format
+
+      - name: Knip unused code check
+        run: pnpm check:knip
 
       - name: Test
         run: pnpm test
