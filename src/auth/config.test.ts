@@ -45,4 +45,31 @@ describe("validateConfig", () => {
   it("throws ConfigurationError when algorithms is empty", () => {
     expect(() => validateConfig({ ...validInput, algorithms: [] })).toThrow(ConfigurationError);
   });
+
+  it("accepts a clockLeewaySeconds of zero", () => {
+    expect(validateConfig({ ...validInput, clockLeewaySeconds: 0 }).clockLeewaySeconds).toBe(0);
+  });
+
+  it("throws ConfigurationError when clockLeewaySeconds is negative", () => {
+    expect(() => validateConfig({ ...validInput, clockLeewaySeconds: -1 })).toThrow(
+      ConfigurationError,
+    );
+  });
+
+  it("throws ConfigurationError when clockLeewaySeconds is not an integer", () => {
+    expect(() => validateConfig({ ...validInput, clockLeewaySeconds: 1.5 })).toThrow(
+      ConfigurationError,
+    );
+  });
+
+  it("throws ConfigurationError when httpTimeoutMs is zero or negative", () => {
+    expect(() => validateConfig({ ...validInput, httpTimeoutMs: 0 })).toThrow(ConfigurationError);
+    expect(() => validateConfig({ ...validInput, httpTimeoutMs: -1 })).toThrow(ConfigurationError);
+  });
+
+  it("throws ConfigurationError when httpTimeoutMs is not an integer", () => {
+    expect(() => validateConfig({ ...validInput, httpTimeoutMs: 100.5 })).toThrow(
+      ConfigurationError,
+    );
+  });
 });

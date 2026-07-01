@@ -14,7 +14,10 @@ export interface FactorialAuthConfig {
   algorithms?: string[];
   /** Clock skew tolerance, in seconds, for `exp`/`nbf`. Defaults to `30`. */
   clockLeewaySeconds?: number;
-  /** Overall timeout for each discovery/JWKS HTTP request, in milliseconds. Defaults to `5000`. */
+  /**
+   * Overall timeout for each discovery/JWKS HTTP request, in milliseconds.
+   * Defaults to `5000`.
+   */
   httpTimeoutMs?: number;
   /** Whether to verify the `nbf` claim. Defaults to `true`. */
   requireNbf?: boolean;
@@ -27,8 +30,16 @@ const configSchema = z.object({
     .array(z.string())
     .min(1, "algorithms must contain at least one value")
     .default(["ES256"]),
-  clockLeewaySeconds: z.number().default(30),
-  httpTimeoutMs: z.number().default(5000),
+  clockLeewaySeconds: z
+    .number()
+    .int("clockLeewaySeconds must be an integer")
+    .nonnegative("clockLeewaySeconds cannot be negative")
+    .default(30),
+  httpTimeoutMs: z
+    .number()
+    .int("httpTimeoutMs must be an integer")
+    .positive("httpTimeoutMs must be greater than zero")
+    .default(5000),
   requireNbf: z.boolean().default(true),
 }) satisfies z.ZodType<FactorialAuthConfig>;
 
