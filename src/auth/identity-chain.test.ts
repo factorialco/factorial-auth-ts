@@ -62,6 +62,26 @@ describe("IdentityChain", () => {
     });
   });
 
+  describe("create", () => {
+    it("builds a nested chain from value objects", () => {
+      const chain = IdentityChain.create({
+        actor: employee,
+        act: IdentityChain.create({ actor: admin }),
+        actType: ActType.AdminBecome,
+      });
+
+      expect(chain.actor.equals(employee)).toBe(true);
+      expect(chain.act?.actor.equals(admin)).toBe(true);
+      expect(chain.actType).toBe(ActType.AdminBecome);
+    });
+
+    it("enforces the act/actType invariant", () => {
+      expect(() => IdentityChain.create({ actor: employee, actType: ActType.AdminBecome })).toThrow(
+        IdentityChainError,
+      );
+    });
+  });
+
   describe("parse", () => {
     const serialized = {
       actor: "f:act:employee:123",

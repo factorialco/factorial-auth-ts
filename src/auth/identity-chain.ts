@@ -50,6 +50,11 @@ export class IdentityChain {
     Object.freeze(this);
   }
 
+  /** Builds an identity chain from value objects, enforcing the act/actType invariant. */
+  static create(options: IdentityChainOptions): IdentityChain {
+    return new IdentityChain(options);
+  }
+
   /** Parses a recursively serialized identity chain, capped at `maxDepth` nodes. */
   static parse(
     serialized: Record<string, unknown>,
