@@ -7,13 +7,7 @@ import { JwksClient } from "@/auth/jwks";
 import { DiscoveryClient } from "@/auth/oidc-discovery";
 
 /**
- * Entry point for verifying Factorial ID tokens. Construction is cheap and
- * synchronous; discovery + JWKS are fetched lazily on the first `verify*` call
- * and cached thereafter.
- *
- * The `verify*` methods throw a typed {@link AuthError} on failure; the
- * `tryVerify*` variants return `null` instead (mirroring the gem's bang /
- * non-bang pair). Unexpected non-auth errors always propagate.
+ * Entry point for decoding and verifying Factorial ID tokens.
  */
 export class FactorialAuth {
   private readonly decoder: Decoder;
@@ -26,20 +20,35 @@ export class FactorialAuth {
     this.decoder = new Decoder(validatedConfig, discoveryClient, jwksClient);
   }
 
-  verifyAccessToken(token: string): Promise<AccessTokenClaims> {
+  /**
+   * Decodes and verifies an access token: checks the signature against the JWKS
+   * and validates `iss`, `aud`, `exp`, and `nbf`, returning typed claims.
+   * Throws an {@link AuthError} subclass if decoding or verification fails.
+   */
+  decodeAccessToken(token: string): Promise<AccessTokenClaims> {
     return this.decoder.decodeAccessToken(token);
   }
 
-  verifyIdToken(token: string): Promise<IdTokenClaims> {
+  /**
+   * Decodes and verifies an ID token (see {@link decodeAccessToken}), returning
+   * typed claims. Throws an {@link AuthError} subclass on failure.
+   */
+  decodeIdToken(token: string): Promise<IdTokenClaims> {
     return this.decoder.decodeIdToken(token);
   }
 
-  tryVerifyAccessToken(token: string): Promise<AccessTokenClaims | null> {
-    return nullOnAuthError(this.verifyAccessToken(token));
+  /**
+   * Like {@link decodeAccessToken}, but returns `null` instead of throwing an {@link AuthError}.
+   */
+  tryDecodeAccessToken(token: string): Promise<AccessTokenClaims | null> {
+    return nullOnAuthError(this.decodeAccessToken(token));
   }
 
-  tryVerifyIdToken(token: string): Promise<IdTokenClaims | null> {
-    return nullOnAuthError(this.verifyIdToken(token));
+  /**
+   * Like {@link decodeIdToken}, but returns `null` instead of throwing an {@link AuthError}.
+   */
+  tryDecodeIdToken(token: string): Promise<IdTokenClaims | null> {
+    return nullOnAuthError(this.decodeIdToken(token));
   }
 }
 

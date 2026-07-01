@@ -31,17 +31,17 @@ const auth = new FactorialAuth({
   audience: "your-client-id",
 });
 
-// Verify an access token
-const accessTokenClaim = await auth.verifyAccessToken(token);
+// Decode and verify an access token
+const accessTokenClaim = await auth.decodeAccessToken(token);
 console.log(accessTokenClaim.sub, accessTokenClaim.cid);
 
-// Verify an id token
-const idTokenClaim = await auth.verifyIdToken(token);
+// Decode and verify an id token
+const idTokenClaim = await auth.decodeIdToken(token);
 console.log(idTokenClaim.sub, idTokenClaim.email);
 ```
 
 Construction is cheap and synchronous — no network calls happen until the first
-`verify*`/`tryVerify*` call. Discovery and JWKS documents are fetched lazily and
+`decode*`/`tryDecode*` call. Discovery and JWKS documents are fetched lazily and
 then cached (see [Caching & key rotation](#caching--key-rotation)).
 
 ## Actor identity primitives
@@ -152,7 +152,7 @@ audit and domain-event flows must carry company or tenant scope separately.
 
 Every verification/decoding failure throws a subclass of `AuthError`. Catch
 `AuthError` to handle all of them, or a specific subclass for finer control. The
-`tryVerify*` methods swallow `AuthError` and return `null`; any other (unexpected)
+`tryDecode*` methods swallow `AuthError` and return `null`; any other (unexpected)
 error propagates.
 
 ```
@@ -174,7 +174,7 @@ Error
 ```
 
 > Note: `ActorRefError` and `IdentityChainError` extend `Error` directly, **not**
-> `AuthError`, and are not affected by `tryVerify*`.
+> `AuthError`, and are not affected by `tryDecode*`.
 
 ```ts
 import {
@@ -185,7 +185,7 @@ import {
 } from "@factorialco/factorial-auth";
 
 try {
-  const claims = await auth.verifyAccessToken(token);
+  const claims = await auth.decodeAccessToken(token);
 } catch (error) {
   if (error instanceof ExpiredToken) {
     // prompt a refresh
@@ -232,7 +232,7 @@ app.use(async (req, res, next) => {
     return res.status(401).json({ error: "missing bearer token" });
   }
 
-  const claims = await auth.tryVerifyAccessToken(token);
+  const claims = await auth.tryDecodeAccessToken(token);
 
   if (claims === null) {
     return res.status(401).json({ error: "invalid token" });
@@ -247,7 +247,7 @@ app.use(async (req, res, next) => {
 
 ```ts
 const token = extractBearerToken(request.headers.get("authorization"));
-const claims = token ? await auth.tryVerifyAccessToken(token) : null;
+const claims = token ? await auth.tryDecodeAccessToken(token) : null;
 ```
 
 ### Delegated identity (`act` → `IdentityChain`)
@@ -258,7 +258,7 @@ you need the chain (e.g. staff-become / admin-become flows):
 ```ts
 import { IdentityChain } from "@factorialco/factorial-auth";
 
-const claims = await auth.verifyAccessToken(token);
+const claims = await auth.decodeAccessToken(token);
 
 if (claims.act) {
   const chain = IdentityChain.parse(claims.act); // throws IdentityChainError if malformed

@@ -69,68 +69,68 @@ describe("FactorialAuth", () => {
     );
   });
 
-  it("verifyAccessToken returns typed access-token claims", async () => {
+  it("decodeAccessToken returns typed access-token claims", async () => {
     const { privateKey, jwk } = await makeKey("kid-1");
     serve(jwk);
 
     const token = await signToken(privateKey, "kid-1", accessPayload());
-    const claims = await buildAuth().verifyAccessToken(token);
+    const claims = await buildAuth().decodeAccessToken(token);
 
     expect(claims.sub).toBe("user-1");
     expect(claims.jti).toBe("jti-1");
   });
 
-  it("verifyIdToken returns typed id-token claims", async () => {
+  it("decodeIdToken returns typed id-token claims", async () => {
     const { privateKey, jwk } = await makeKey("kid-1");
     serve(jwk);
 
     const token = await signToken(privateKey, "kid-1", idPayload({ email: "user@factorial.co" }));
-    const claims = await buildAuth().verifyIdToken(token);
+    const claims = await buildAuth().decodeIdToken(token);
 
     expect(claims.email).toBe("user@factorial.co");
   });
 
-  it("verifyAccessToken propagates the mapped token error", async () => {
+  it("decodeAccessToken propagates the mapped token error", async () => {
     const { privateKey, jwk } = await makeKey("kid-1");
     serve(jwk);
 
     const token = await signToken(privateKey, "kid-1", accessPayload({ exp: NOW - 3600 }));
-    await expect(buildAuth().verifyAccessToken(token)).rejects.toThrow(ExpiredToken);
+    await expect(buildAuth().decodeAccessToken(token)).rejects.toThrow(ExpiredToken);
   });
 
-  it("tryVerifyAccessToken returns claims on success", async () => {
+  it("tryDecodeAccessToken returns claims on success", async () => {
     const { privateKey, jwk } = await makeKey("kid-1");
     serve(jwk);
 
     const token = await signToken(privateKey, "kid-1", accessPayload());
-    const claims = await buildAuth().tryVerifyAccessToken(token);
+    const claims = await buildAuth().tryDecodeAccessToken(token);
 
     expect(claims?.sub).toBe("user-1");
   });
 
-  it("tryVerifyAccessToken returns null on an auth error", async () => {
+  it("tryDecodeAccessToken returns null on an auth error", async () => {
     const { privateKey, jwk } = await makeKey("kid-1");
     serve(jwk);
 
     const token = await signToken(privateKey, "kid-1", accessPayload({ exp: NOW - 3600 }));
-    expect(await buildAuth().tryVerifyAccessToken(token)).toBeNull();
+    expect(await buildAuth().tryDecodeAccessToken(token)).toBeNull();
   });
 
-  it("tryVerifyIdToken returns null on an auth error", async () => {
+  it("tryDecodeIdToken returns null on an auth error", async () => {
     const { privateKey, jwk } = await makeKey("kid-1");
     serve(jwk);
 
     const token = await signToken(privateKey, "kid-1", idPayload({ aud: "someone-else" }));
-    expect(await buildAuth().tryVerifyIdToken(token)).toBeNull();
+    expect(await buildAuth().tryDecodeIdToken(token)).toBeNull();
   });
 
-  it("tryVerifyAccessToken re-throws errors that are not auth errors", async () => {
+  it("tryDecodeAccessToken re-throws errors that are not auth errors", async () => {
     const auth = buildAuth();
     // Simulate an unexpected (non-AuthError) failure escaping the decoder.
     (auth as unknown as { decoder: { decodeAccessToken: () => Promise<never> } }).decoder = {
       decodeAccessToken: () => Promise.reject(new TypeError("unexpected")),
     };
 
-    await expect(auth.tryVerifyAccessToken("token")).rejects.toThrow(TypeError);
+    await expect(auth.tryDecodeAccessToken("token")).rejects.toThrow(TypeError);
   });
 });
