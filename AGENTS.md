@@ -2,12 +2,10 @@
 
 ## Commands
 
-- **Run all checks**: `pnpm checks` (lint, format, typecheck, unused code)
-- **Test all**: `pnpm run test`
-- **Typecheck**: `pnpm checks:tsc`
-- **Linter**: `pnpm checks:lint`
-- **Format**: `pnpm checks:format`
-- **Unused code**: `pnpm checks:knip`
+- `pnpm test` — run tests once (vitest); also `test:watch`, `test:coverage`
+- `pnpm build` — build to `dist/` (ESM + CJS + `.d.ts`) via tsup
+- `pnpm checks` — run all checks in parallel: `checks:lint` (oxlint), `checks:format` (oxfmt, check-only; `pnpm exec oxfmt` to fix), `checks:tsc` (tsgo), `checks:knip` (unused files/exports/deps)
+- `pnpm typecheck` — type-check with `tsc --noEmit` (`checks:tsc` uses tsgo)
 
 ## Code Style
 

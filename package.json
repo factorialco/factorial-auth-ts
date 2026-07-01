@@ -2,7 +2,26 @@
   "name": "@factorialco/factorial-auth",
   "version": "0.1.0",
   "description": "Decode and verify Factorial ID JWT tokens.",
+  "keywords": [
+    "authentication",
+    "factorial",
+    "factorial-id",
+    "jose",
+    "jwks",
+    "jwt",
+    "oidc",
+    "token-verification"
+  ],
+  "homepage": "https://github.com/factorialco/factorial-auth-ts#readme",
+  "bugs": {
+    "url": "https://github.com/factorialco/factorial-auth-ts/issues"
+  },
   "license": "MIT",
+  "author": "Factorial <dev@factorial.co>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/factorialco/factorial-auth-ts.git"
+  },
   "files": [
     "dist"
   ],
