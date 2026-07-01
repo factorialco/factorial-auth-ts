@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { ActorRef, ActorRefError } from "@/actor-ref";
-import { ActorType } from "@/actor-type";
+import { ActorRef, ActorRefError } from "@/auth/actor-ref";
+import { ActorType } from "@/auth/actor-type";
 
 describe("ActorRef", () => {
   describe("parse", () => {

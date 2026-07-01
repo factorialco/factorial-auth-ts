@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parseIdTokenClaims } from "@/claims/id-token";
-import { InvalidToken } from "@/errors";
+import { parseIdTokenClaims } from "@/auth/claims/id-token";
+import { InvalidToken } from "@/auth/errors";
 
 const validPayload = () => ({
   iss: "https://factorial-id.example.com",

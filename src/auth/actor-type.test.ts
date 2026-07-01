@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ActorType, isActorType } from "@/actor-type";
+import { ActorType, isActorType } from "@/auth/actor-type";
 
 describe("isActorType", () => {
   it("accepts known actor types", () => {

@@ -12,7 +12,7 @@ import {
   OidcDiscoveryFetchError,
   OidcDiscoveryParseError,
   TokenError,
-} from "@/errors";
+} from "@/auth/errors";
 
 describe("errors", () => {
   it.each([

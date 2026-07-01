@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { InvalidToken } from "@/errors";
+import { InvalidToken } from "@/auth/errors";
 import {
   dropNullValues,
   optionalBoolean,
@@ -9,7 +9,7 @@ import {
   optionalStringArray,
   requiredInteger,
   requiredString,
-} from "@/claims/fields";
+} from "@/auth/claims/fields";
 
 const accessTokenClaimsSchema = z.object({
   iss: requiredString,

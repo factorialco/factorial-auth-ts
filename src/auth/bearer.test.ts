@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractBearerToken } from "@/bearer";
+import { extractBearerToken } from "@/auth/bearer";
 
 describe("extractBearerToken", () => {
   it("extracts the token from a Bearer header", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { validateConfig } from "@/config";
-import { ConfigurationError } from "@/errors";
+import { validateConfig } from "@/auth/config";
+import { ConfigurationError } from "@/auth/errors";
 
 const validInput = {
   oidcDiscoveryUrl: "https://factorial-id.example.com/.well-known/openid-configuration",

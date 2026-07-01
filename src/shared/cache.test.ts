@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TtlCache } from "@/cache";
+import { TtlCache } from "@/shared/cache";
 
 const FRESH_MS = 1000;
 const STALE_MS = 5000;

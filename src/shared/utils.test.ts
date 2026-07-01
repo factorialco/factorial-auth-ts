@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isPresent, isRecord, isString } from "@/utils";
+import { isPresent, isRecord, isString } from "@/shared/utils";
 
 describe("isString", () => {
   it("accepts strings and rejects everything else", () => {

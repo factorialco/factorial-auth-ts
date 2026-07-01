@@ -1,6 +1,6 @@
 import { ActType, isActType } from "./act-type";
 import { ActorRef, ActorRefError } from "./actor-ref";
-import { isPresent, isRecord, isString } from "./utils";
+import { isPresent, isRecord, isString } from "@/shared/utils";
 
 const DEFAULT_MAX_DEPTH = 3;
 

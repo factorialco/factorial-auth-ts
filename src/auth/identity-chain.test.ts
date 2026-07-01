@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ActType } from "@/act-type";
-import { ActorRef } from "@/actor-ref";
-import { IdentityChain, IdentityChainError } from "@/identity-chain";
+import { ActType } from "@/auth/act-type";
+import { ActorRef } from "@/auth/actor-ref";
+import { IdentityChain, IdentityChainError } from "@/auth/identity-chain";
 
 const employee = ActorRef.employee("123");
 const admin = ActorRef.employee("999");

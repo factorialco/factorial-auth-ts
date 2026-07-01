@@ -1,4 +1,4 @@
-import { isPresent } from "./utils";
+import { isPresent } from "@/shared/utils";
 
 /**
  * Extracts the token from an HTTP `Authorization: Bearer <token>` header.

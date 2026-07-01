@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ConfigurationError } from "@/errors";
+import { ConfigurationError } from "@/auth/errors";
 
 /**
  * User-facing configuration for factorial-auth.

@@ -1,7 +1,7 @@
 import { HttpResponse, delay, http } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { fetchText } from "@/http";
+import { fetchText } from "@/shared/http";
 
 const ENDPOINT = "https://factorial-id.example.com/data";
 
