@@ -5,6 +5,7 @@ export { extractBearerToken } from "@/auth/bearer";
 export type { AccessTokenClaims } from "@/auth/claims/access-token";
 export type { IdTokenClaims } from "@/auth/claims/id-token";
 export type { FactorialAuthConfig } from "@/auth/config";
+export { FactorialAuth } from "@/auth/factorial-auth";
 export { IdentityChain, IdentityChainError } from "@/auth/identity-chain";
 export type { SerializedIdentityChain } from "@/auth/identity-chain";
 export * from "@/auth/errors";
