@@ -3,7 +3,7 @@
 Verify and decode [Factorial ID](https://github.com/factorialco/factorial/tree/main/factorial-id) JWT access and ID tokens.
 
 Library-agnostic: it depends only on [`jose`](https://github.com/panva/jose) and the global `fetch`,
-so it runs on **Node.js (>= 20)** and on **edge / serverless** runtimes.
+so it runs on **Node.js (>= 22.14)** and on **edge / serverless** runtimes.
 
 - Resolves the issuer + JWKS URI via **OIDC discovery** (cached, with stale fallback).
 - Verifies tokens (ES256 by default): **signature, `iss`, `aud`, `exp`, `nbf`**.
@@ -268,7 +268,7 @@ if (claims.act) {
 
 ## Compatibility
 
-- **Runtime:** Node.js >= 20, and any edge/serverless runtime with global
+- **Runtime:** Node.js >= 22.14, and any edge/serverless runtime with global
   `fetch` and Web Crypto (Cloudflare Workers, Vercel Edge, Deno, Bun).
 - **Modules:** dual ESM (`import`) and CJS (`require`) entry points with bundled
   `.d.ts`.
