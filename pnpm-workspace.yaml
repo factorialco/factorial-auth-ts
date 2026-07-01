@@ -1,2 +1,4 @@
 allowBuilds:
   esbuild: true
+  # msw's postinstall only sets up the browser service worker; we use setupServer (node).
+  msw: false

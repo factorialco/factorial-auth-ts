@@ -46,6 +46,7 @@
     "@types/node": "^24.0.0",
     "@typescript/native-preview": "7.0.0-dev.20260320.1",
     "@vitest/coverage-v8": "^4.1.9",
+    "msw": "^2.14.6",
     "npm-run-all2": "^9.0.2",
     "oxfmt": "0.28.0",
     "oxlint": "^1.0.0",
