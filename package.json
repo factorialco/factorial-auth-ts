@@ -56,13 +56,15 @@
     "checks:lint": "oxlint",
     "checks:format": "oxfmt --check",
     "checks:tsc": "tsgo --noEmit -p tsconfig.json",
-    "checks:knip": "pnpm knip --no-config-hints"
+    "checks:knip": "pnpm knip --no-config-hints",
+    "checks:attw": "attw --pack . --profile node16"
   },
   "dependencies": {
     "jose": "^6.2.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.4",
     "@types/node": "^24.0.0",
     "@typescript/native-preview": "7.0.0-dev.20260320.1",
     "@vitest/coverage-v8": "^4.1.9",
