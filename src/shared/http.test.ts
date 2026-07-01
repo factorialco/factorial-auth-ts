@@ -1,13 +1,13 @@
 import { HttpResponse, delay, http } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { fetchText } from "@/shared/http";
+import { HttpError, HttpParseError, fetchJson } from "@/shared/http";
 
 const ENDPOINT = "https://factorial-id.example.com/data";
 
 const server = setupServer();
 
-describe("fetchText", () => {
+describe("fetchJson", () => {
   beforeAll(() => {
     server.listen({ onUnhandledRequest: "error" });
   });
@@ -20,36 +20,41 @@ describe("fetchText", () => {
     server.close();
   });
 
-  it("returns the response body", async () => {
-    server.use(http.get(ENDPOINT, () => HttpResponse.text("hello")));
-    expect(await fetchText(ENDPOINT, 5000)).toBe("hello");
+  it("returns the parsed JSON body", async () => {
+    server.use(http.get(ENDPOINT, () => HttpResponse.json({ hello: "world" })));
+    expect(await fetchJson(ENDPOINT, 5000)).toEqual({ hello: "world" });
   });
 
-  it("throws on a non-2xx status", async () => {
+  it("throws HttpError on a non-2xx status", async () => {
     server.use(http.get(ENDPOINT, () => new HttpResponse(null, { status: 500 })));
-    await expect(fetchText(ENDPOINT, 5000)).rejects.toThrow(/status 500/);
+    await expect(fetchJson(ENDPOINT, 5000)).rejects.toThrow(HttpError);
   });
 
-  it("throws on a network error", async () => {
+  it("throws HttpError on a network error", async () => {
     server.use(http.get(ENDPOINT, () => HttpResponse.error()));
-    await expect(fetchText(ENDPOINT, 5000)).rejects.toThrow(Error);
+    await expect(fetchJson(ENDPOINT, 5000)).rejects.toThrow(HttpError);
   });
 
-  it("throws a timeout when the request exceeds the timeout", async () => {
+  it("throws HttpError (timeout) when the request exceeds the timeout", async () => {
     server.use(
       http.get(ENDPOINT, async () => {
         await delay(50);
-        return HttpResponse.text("late");
+        return HttpResponse.json({ ok: true });
       }),
     );
-    await expect(fetchText(ENDPOINT, 10)).rejects.toThrow(/timed out/);
+    await expect(fetchJson(ENDPOINT, 10)).rejects.toThrow(/timed out/);
   });
 
-  it("rejects unsupported URL schemes", async () => {
-    await expect(fetchText("ftp://factorial-id.example.com/data", 5000)).rejects.toThrow(/scheme/);
+  it("throws HttpError for unsupported URL schemes", async () => {
+    await expect(fetchJson("ftp://factorial-id.example.com/data", 5000)).rejects.toThrow(HttpError);
   });
 
-  it("rejects malformed URLs", async () => {
-    await expect(fetchText("not a url", 5000)).rejects.toThrow(/Invalid URL/);
+  it("throws HttpError for malformed URLs", async () => {
+    await expect(fetchJson("not a url", 5000)).rejects.toThrow(HttpError);
+  });
+
+  it("throws HttpParseError when the body is not valid JSON", async () => {
+    server.use(http.get(ENDPOINT, () => HttpResponse.text("not json")));
+    await expect(fetchJson(ENDPOINT, 5000)).rejects.toThrow(HttpParseError);
   });
 });
