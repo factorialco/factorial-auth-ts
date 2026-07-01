@@ -2,6 +2,8 @@ export { ActType } from "@/act-type";
 export { ActorRef, ActorRefError } from "@/actor-ref";
 export { ActorType } from "@/actor-type";
 export { extractBearerToken } from "@/bearer";
+export type { AccessTokenClaims } from "@/claims/access-token";
+export type { IdTokenClaims } from "@/claims/id-token";
 export type { FactorialAuthConfig } from "@/config";
 export { IdentityChain, IdentityChainError } from "@/identity-chain";
 export type { SerializedIdentityChain } from "@/identity-chain";
