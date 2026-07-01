@@ -1,4 +1,12 @@
-import { type JWK, SignJWT, errors, exportJWK, generateKeyPair, jwtVerify } from "jose";
+import {
+  type CryptoKey,
+  type JWK,
+  SignJWT,
+  errors,
+  exportJWK,
+  generateKeyPair,
+  jwtVerify,
+} from "jose";
 import { HttpResponse, http } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
