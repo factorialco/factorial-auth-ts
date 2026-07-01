@@ -40,11 +40,8 @@ jobs:
       - name: Knip unused code check
         run: pnpm checks:knip
 
-      - name: Are the types wrong?
-        run: pnpm checks:attw
+      - name: Package checks (build + publint + attw)
+        run: pnpm checks:package
 
       - name: Test
         run: pnpm test
-
-      - name: Build
-        run: pnpm build

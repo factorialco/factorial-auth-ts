@@ -57,7 +57,7 @@
     "checks:format": "oxfmt --check",
     "checks:tsc": "tsgo --noEmit -p tsconfig.json",
     "checks:knip": "pnpm knip --no-config-hints",
-    "checks:attw": "attw --pack . --profile node16"
+    "checks:package": "pnpm pack --out tmp/pkg.tgz && attw tmp/pkg.tgz --profile node16 && publint run tmp/pkg.tgz --strict"
   },
   "dependencies": {
     "jose": "^6.2.3",
@@ -73,6 +73,7 @@
     "npm-run-all2": "^9.0.2",
     "oxfmt": "0.28.0",
     "oxlint": "^1.0.0",
+    "publint": "^0.3.21",
     "tsup": "^8.3.0",
     "typescript": "^5.9.0",
     "vitest": "^4.1.9"
