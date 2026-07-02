@@ -14,7 +14,8 @@ export default defineConfig({
       provider: "v8",
       include: ["src/**/*.ts"],
       exclude: ["src/**/*.test.ts", "src/index.ts"],
-      reporter: ["text"],
+      reporter: ["text", "json", "json-summary"],
+      reportOnFailure: true,
     },
   },
   resolve: {
