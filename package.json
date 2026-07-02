@@ -48,6 +48,7 @@
   "scripts": {
     "build": "tsup",
     "prepack": "pnpm build",
+    "prepare": "lefthook install",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -65,10 +66,13 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.4",
+    "@commitlint/cli": "^21.2.0",
+    "@commitlint/config-conventional": "^21.2.0",
     "@types/node": "^24.0.0",
     "@typescript/native-preview": "7.0.0-dev.20260320.1",
     "@vitest/coverage-v8": "^4.1.9",
     "knip": "^6.23.0",
+    "lefthook": "^2.1.9",
     "msw": "^2.14.6",
     "npm-run-all2": "^9.0.2",
     "oxfmt": "0.28.0",

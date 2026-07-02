@@ -1,0 +1,6 @@
+# Git hooks managed by lefthook. Installed automatically via the `prepare`
+# script on `pnpm install`.
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: pnpm exec commitlint --edit {1}
