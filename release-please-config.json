@@ -3,7 +3,7 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "package-name": "@factorialco/factorial-auth"
+      "package-name": "@factorialco/auth"
     }
   }
 }

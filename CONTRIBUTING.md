@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for contributing to `@factorialco/factorial-auth`!
+Thanks for contributing to `@factorialco/auth`!
 
 ## Prerequisites
 
