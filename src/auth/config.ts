@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { ConfigurationError } from "@/auth/errors";
+import { z } from 'zod'
+import { ConfigurationError } from '@/auth/errors'
 
 /**
  * User-facing configuration for factorial-auth.
@@ -7,43 +7,43 @@ import { ConfigurationError } from "@/auth/errors";
  * */
 export interface FactorialAuthConfig {
   /** OIDC discovery URL, e.g. `https://fid.example.com/.well-known/openid-configuration`. */
-  oidcDiscoveryUrl: string;
+  oidcDiscoveryUrl: string
   /** Expected `aud` claim. */
-  audience: string;
+  audience: string
   /** Allowed JWS algorithms. Defaults to `["ES256"]`. */
-  algorithms?: string[];
+  algorithms?: string[]
   /** Clock skew tolerance, in seconds, for `exp`/`nbf`. Defaults to `30`. */
-  clockLeewaySeconds?: number;
+  clockLeewaySeconds?: number
   /**
    * Overall timeout for each discovery/JWKS HTTP request, in milliseconds.
    * Defaults to `5000`.
    */
-  httpTimeoutMs?: number;
+  httpTimeoutMs?: number
   /** Whether to verify the `nbf` claim. Defaults to `true`. */
-  requireNbf?: boolean;
+  requireNbf?: boolean
 }
 
 const configSchema = z.object({
-  oidcDiscoveryUrl: z.string().min(1, "oidcDiscoveryUrl is required"),
-  audience: z.string().min(1, "audience is required"),
+  oidcDiscoveryUrl: z.string().min(1, 'oidcDiscoveryUrl is required'),
+  audience: z.string().min(1, 'audience is required'),
   algorithms: z
     .array(z.string())
-    .min(1, "algorithms must contain at least one value")
-    .default(["ES256"]),
+    .min(1, 'algorithms must contain at least one value')
+    .default(['ES256']),
   clockLeewaySeconds: z
     .number()
-    .int("clockLeewaySeconds must be an integer")
-    .nonnegative("clockLeewaySeconds cannot be negative")
+    .int('clockLeewaySeconds must be an integer')
+    .nonnegative('clockLeewaySeconds cannot be negative')
     .default(30),
   httpTimeoutMs: z
     .number()
-    .int("httpTimeoutMs must be an integer")
-    .positive("httpTimeoutMs must be greater than zero")
+    .int('httpTimeoutMs must be an integer')
+    .positive('httpTimeoutMs must be greater than zero')
     .default(5000),
   requireNbf: z.boolean().default(true),
-}) satisfies z.ZodType<FactorialAuthConfig>;
+}) satisfies z.ZodType<FactorialAuthConfig>
 
-export type FactorialAuthValidatedConfig = z.infer<typeof configSchema> & FactorialAuthConfig;
+export type FactorialAuthValidatedConfig = z.infer<typeof configSchema> & FactorialAuthConfig
 
 /**
  * Validates the config and applies defaults, returning the resolved config.
@@ -51,11 +51,11 @@ export type FactorialAuthValidatedConfig = z.infer<typeof configSchema> & Factor
  * (mirrors the gem's `Configuration#validate!`).
  */
 export function validateConfig(config: FactorialAuthConfig): FactorialAuthValidatedConfig {
-  const result = configSchema.safeParse(config);
+  const result = configSchema.safeParse(config)
 
   if (!result.success) {
-    throw new ConfigurationError(result.error.issues[0].message);
+    throw new ConfigurationError(result.error.issues[0].message)
   }
 
-  return result.data;
+  return result.data
 }

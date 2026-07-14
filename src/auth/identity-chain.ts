@@ -1,23 +1,23 @@
-import { ActType, isActType } from "./act-type";
-import { ActorRef, ActorRefError } from "./actor-ref";
-import { isPresent, isRecord, isString } from "@/shared/utils";
+import { ActType, isActType } from './act-type'
+import { ActorRef, ActorRefError } from './actor-ref'
+import { isPresent, isRecord, isString } from '@/shared/utils'
 
-const DEFAULT_MAX_DEPTH = 3;
+const DEFAULT_MAX_DEPTH = 3
 
 export class IdentityChainError extends Error {
-  name = "IdentityChainError";
+  name = 'IdentityChainError'
 }
 
 export type SerializedIdentityChain = {
-  actor: string;
-  act?: SerializedIdentityChain;
-  act_type?: ActType;
-};
+  actor: string
+  act?: SerializedIdentityChain
+  act_type?: ActType
+}
 
 interface IdentityChainOptions {
-  actor: ActorRef;
-  act?: IdentityChain;
-  actType?: ActType;
+  actor: ActorRef
+  act?: IdentityChain
+  actType?: ActType
 }
 
 /**
@@ -30,118 +30,118 @@ interface IdentityChainOptions {
  * admin -> employee flow.
  */
 export class IdentityChain {
-  readonly actor: ActorRef;
-  readonly act?: IdentityChain;
-  readonly actType?: ActType;
+  readonly actor: ActorRef
+  readonly act?: IdentityChain
+  readonly actType?: ActType
 
   constructor({ actor, act, actType }: IdentityChainOptions) {
-    this.actor = actor;
-    this.act = act;
-    this.actType = actType;
+    this.actor = actor
+    this.act = act
+    this.actType = actType
 
     if (this.act === undefined && this.actType !== undefined) {
-      throw new IdentityChainError("Identity chain act_type requires act");
+      throw new IdentityChainError('Identity chain act_type requires act')
     }
 
     if (this.act !== undefined && this.actType === undefined) {
-      throw new IdentityChainError("Identity chain act requires act_type");
+      throw new IdentityChainError('Identity chain act requires act_type')
     }
 
-    Object.freeze(this);
+    Object.freeze(this)
   }
 
   /** Builds an identity chain from value objects, enforcing the act/actType invariant. */
   static create(options: IdentityChainOptions): IdentityChain {
-    return new IdentityChain(options);
+    return new IdentityChain(options)
   }
 
   /** Parses a recursively serialized identity chain, capped at `maxDepth` nodes. */
   static parse(
     serialized: Record<string, unknown>,
-    options: { maxDepth?: number } = {},
+    options: { maxDepth?: number } = {}
   ): IdentityChain {
-    const maxDepth = options.maxDepth ?? DEFAULT_MAX_DEPTH;
+    const maxDepth = options.maxDepth ?? DEFAULT_MAX_DEPTH
 
     if (maxDepth < 1) {
-      throw new RangeError("Identity chain max depth must be positive");
+      throw new RangeError('Identity chain max depth must be positive')
     }
 
-    return parseNode(serialized, maxDepth, 1);
+    return parseNode(serialized, maxDepth, 1)
   }
 
   /** Serializes to the recursive wire form (omitting absent `act`/`act_type`). */
   toObject(): SerializedIdentityChain {
     const result: SerializedIdentityChain = {
       actor: this.actor.toString(),
-    };
+    }
 
     if (this.act !== undefined) {
-      result.act = this.act.toObject();
+      result.act = this.act.toObject()
     }
 
     if (this.actType !== undefined) {
-      result.act_type = this.actType;
+      result.act_type = this.actType
     }
 
-    return result;
+    return result
   }
 
   equals(other: IdentityChain): boolean {
     if (!this.actor.equals(other.actor) || this.actType !== other.actType) {
-      return false;
+      return false
     }
 
     if (this.act === undefined || other.act === undefined) {
-      return this.act === other.act;
+      return this.act === other.act
     }
 
-    return this.act.equals(other.act);
+    return this.act.equals(other.act)
   }
 }
 
 function parseNode(node: Record<string, unknown>, maxDepth: number, depth: number): IdentityChain {
   if (depth > maxDepth) {
-    throw new IdentityChainError(`Identity chain cannot be deeper than ${maxDepth} actors`);
+    throw new IdentityChainError(`Identity chain cannot be deeper than ${maxDepth} actors`)
   }
 
-  const actorValue = node["actor"];
+  const actorValue = node['actor']
 
   if (!isString(actorValue)) {
-    throw new IdentityChainError("Invalid identity chain");
+    throw new IdentityChainError('Invalid identity chain')
   }
 
-  let act: IdentityChain | undefined;
-  const actValue = node["act"];
+  let act: IdentityChain | undefined
+  const actValue = node['act']
 
   if (isPresent(actValue)) {
     if (!isRecord(actValue)) {
-      throw new IdentityChainError("Invalid identity chain");
+      throw new IdentityChainError('Invalid identity chain')
     }
 
-    act = parseNode(actValue, maxDepth, depth + 1);
+    act = parseNode(actValue, maxDepth, depth + 1)
   }
 
-  let actType: ActType | undefined;
-  const actTypeValue = node["act_type"];
+  let actType: ActType | undefined
+  const actTypeValue = node['act_type']
 
   if (isPresent(actTypeValue)) {
     if (!isString(actTypeValue)) {
-      throw new IdentityChainError("Invalid identity chain");
+      throw new IdentityChainError('Invalid identity chain')
     }
 
     if (!isActType(actTypeValue)) {
-      throw new IdentityChainError(`Invalid act type: ${JSON.stringify(actTypeValue)}`);
+      throw new IdentityChainError(`Invalid act type: ${JSON.stringify(actTypeValue)}`)
     }
 
-    actType = actTypeValue;
+    actType = actTypeValue
   }
 
   try {
-    return new IdentityChain({ actor: ActorRef.parse(actorValue), act, actType });
+    return new IdentityChain({ actor: ActorRef.parse(actorValue), act, actType })
   } catch (error) {
     if (error instanceof ActorRefError) {
-      throw new IdentityChainError(error.message);
+      throw new IdentityChainError(error.message)
     }
-    throw error;
+    throw error
   }
 }

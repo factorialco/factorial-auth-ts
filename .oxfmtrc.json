@@ -6,5 +6,5 @@
   "printWidth": 100,
   "tabWidth": 2,
   "sortPackageJson": false,
-  "ignorePatterns": ["node_modules", "dist", "tmp"]
+  "ignorePatterns": ["node_modules", "dist", "tmp", "CHANGELOG.md"]
 }

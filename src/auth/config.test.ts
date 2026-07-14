@@ -1,75 +1,75 @@
-import { describe, expect, it } from "vitest";
-import { validateConfig } from "@/auth/config";
-import { ConfigurationError } from "@/auth/errors";
+import { describe, expect, it } from 'vitest'
+import { validateConfig } from '@/auth/config'
+import { ConfigurationError } from '@/auth/errors'
 
 const validInput = {
-  oidcDiscoveryUrl: "https://factorial-id.example.com/.well-known/openid-configuration",
-  audience: "factorial",
-};
+  oidcDiscoveryUrl: 'https://factorial-id.example.com/.well-known/openid-configuration',
+  audience: 'factorial',
+}
 
-describe("validateConfig", () => {
-  it("applies defaults for omitted optional fields", () => {
-    const config = validateConfig(validInput);
+describe('validateConfig', () => {
+  it('applies defaults for omitted optional fields', () => {
+    const config = validateConfig(validInput)
 
-    expect(config.algorithms).toEqual(["ES256"]);
-    expect(config.clockLeewaySeconds).toBe(30);
-    expect(config.httpTimeoutMs).toBe(5000);
-    expect(config.requireNbf).toBe(true);
-  });
+    expect(config.algorithms).toEqual(['ES256'])
+    expect(config.clockLeewaySeconds).toBe(30)
+    expect(config.httpTimeoutMs).toBe(5000)
+    expect(config.requireNbf).toBe(true)
+  })
 
-  it("keeps provided values over the defaults", () => {
+  it('keeps provided values over the defaults', () => {
     const config = validateConfig({
       ...validInput,
-      algorithms: ["ES384"],
+      algorithms: ['ES384'],
       clockLeewaySeconds: 5,
       httpTimeoutMs: 1000,
       requireNbf: false,
-    });
+    })
 
-    expect(config.algorithms).toEqual(["ES384"]);
-    expect(config.clockLeewaySeconds).toBe(5);
-    expect(config.httpTimeoutMs).toBe(1000);
-    expect(config.requireNbf).toBe(false);
-  });
+    expect(config.algorithms).toEqual(['ES384'])
+    expect(config.clockLeewaySeconds).toBe(5)
+    expect(config.httpTimeoutMs).toBe(1000)
+    expect(config.requireNbf).toBe(false)
+  })
 
-  it("throws ConfigurationError when oidcDiscoveryUrl is empty", () => {
-    expect(() => validateConfig({ ...validInput, oidcDiscoveryUrl: "" })).toThrow(
-      ConfigurationError,
-    );
-  });
+  it('throws ConfigurationError when oidcDiscoveryUrl is empty', () => {
+    expect(() => validateConfig({ ...validInput, oidcDiscoveryUrl: '' })).toThrow(
+      ConfigurationError
+    )
+  })
 
-  it("throws ConfigurationError when audience is empty", () => {
-    expect(() => validateConfig({ ...validInput, audience: "" })).toThrow(ConfigurationError);
-  });
+  it('throws ConfigurationError when audience is empty', () => {
+    expect(() => validateConfig({ ...validInput, audience: '' })).toThrow(ConfigurationError)
+  })
 
-  it("throws ConfigurationError when algorithms is empty", () => {
-    expect(() => validateConfig({ ...validInput, algorithms: [] })).toThrow(ConfigurationError);
-  });
+  it('throws ConfigurationError when algorithms is empty', () => {
+    expect(() => validateConfig({ ...validInput, algorithms: [] })).toThrow(ConfigurationError)
+  })
 
-  it("accepts a clockLeewaySeconds of zero", () => {
-    expect(validateConfig({ ...validInput, clockLeewaySeconds: 0 }).clockLeewaySeconds).toBe(0);
-  });
+  it('accepts a clockLeewaySeconds of zero', () => {
+    expect(validateConfig({ ...validInput, clockLeewaySeconds: 0 }).clockLeewaySeconds).toBe(0)
+  })
 
-  it("throws ConfigurationError when clockLeewaySeconds is negative", () => {
+  it('throws ConfigurationError when clockLeewaySeconds is negative', () => {
     expect(() => validateConfig({ ...validInput, clockLeewaySeconds: -1 })).toThrow(
-      ConfigurationError,
-    );
-  });
+      ConfigurationError
+    )
+  })
 
-  it("throws ConfigurationError when clockLeewaySeconds is not an integer", () => {
+  it('throws ConfigurationError when clockLeewaySeconds is not an integer', () => {
     expect(() => validateConfig({ ...validInput, clockLeewaySeconds: 1.5 })).toThrow(
-      ConfigurationError,
-    );
-  });
+      ConfigurationError
+    )
+  })
 
-  it("throws ConfigurationError when httpTimeoutMs is zero or negative", () => {
-    expect(() => validateConfig({ ...validInput, httpTimeoutMs: 0 })).toThrow(ConfigurationError);
-    expect(() => validateConfig({ ...validInput, httpTimeoutMs: -1 })).toThrow(ConfigurationError);
-  });
+  it('throws ConfigurationError when httpTimeoutMs is zero or negative', () => {
+    expect(() => validateConfig({ ...validInput, httpTimeoutMs: 0 })).toThrow(ConfigurationError)
+    expect(() => validateConfig({ ...validInput, httpTimeoutMs: -1 })).toThrow(ConfigurationError)
+  })
 
-  it("throws ConfigurationError when httpTimeoutMs is not an integer", () => {
+  it('throws ConfigurationError when httpTimeoutMs is not an integer', () => {
     expect(() => validateConfig({ ...validInput, httpTimeoutMs: 100.5 })).toThrow(
-      ConfigurationError,
-    );
-  });
-});
+      ConfigurationError
+    )
+  })
+})

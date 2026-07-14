@@ -1,4 +1,4 @@
-import { isPresent } from "@/shared/utils";
+import { isPresent } from '@/shared/utils'
 
 /**
  * Extracts the token from an HTTP `Authorization: Bearer <token>` header.
@@ -10,13 +10,13 @@ import { isPresent } from "@/shared/utils";
  */
 export function extractBearerToken(authorizationHeader: string | null | undefined): string | null {
   if (!isPresent(authorizationHeader)) {
-    return null;
+    return null
   }
 
-  const parts = authorizationHeader.trim().split(/\s+/);
-  if (parts.length !== 2 || parts[0] !== "Bearer") {
-    return null;
+  const parts = authorizationHeader.trim().split(/\s+/)
+  if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    return null
   }
 
-  return parts[1];
+  return parts[1]
 }

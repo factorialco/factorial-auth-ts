@@ -1,11 +1,11 @@
-export { ActType } from "@/auth/act-type";
-export { ActorRef, ActorRefError } from "@/auth/actor-ref";
-export { ActorType } from "@/auth/actor-type";
-export { extractBearerToken } from "@/auth/bearer";
-export type { AccessTokenClaims } from "@/auth/claims/access-token";
-export type { IdTokenClaims } from "@/auth/claims/id-token";
-export type { FactorialAuthConfig } from "@/auth/config";
-export { FactorialAuth } from "@/auth/factorial-auth";
-export { IdentityChain, IdentityChainError } from "@/auth/identity-chain";
-export type { SerializedIdentityChain } from "@/auth/identity-chain";
-export * from "@/auth/errors";
+export { ActType } from '@/auth/act-type'
+export { ActorRef, ActorRefError } from '@/auth/actor-ref'
+export { ActorType } from '@/auth/actor-type'
+export { extractBearerToken } from '@/auth/bearer'
+export type { AccessTokenClaims } from '@/auth/claims/access-token'
+export type { IdTokenClaims } from '@/auth/claims/id-token'
+export type { FactorialAuthConfig } from '@/auth/config'
+export { FactorialAuth } from '@/auth/factorial-auth'
+export { IdentityChain, IdentityChainError } from '@/auth/identity-chain'
+export type { SerializedIdentityChain } from '@/auth/identity-chain'
+export * from '@/auth/errors'
