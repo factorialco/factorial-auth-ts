@@ -1,4 +1,4 @@
-# @factorialco/factorial-auth
+# @factorialco/auth
 
 Verify and decode [Factorial ID](https://github.com/factorialco/factorial/tree/main/factorial-id) JWT access and ID tokens.
 
@@ -17,14 +17,14 @@ so it runs on **Node.js (>= 22.14)** and on **edge / serverless** runtimes.
 ## Install
 
 ```bash
-pnpm add @factorialco/factorial-auth
+pnpm add @factorialco/auth
 # or: npm install / yarn add / bun add
 ```
 
 ## Quick start
 
 ```ts
-import { FactorialAuth } from "@factorialco/factorial-auth";
+import { FactorialAuth } from "@factorialco/auth";
 
 const auth = new FactorialAuth({
   oidcDiscoveryUrl: "https://id.factorialhr.com/.well-known/openid-configuration",
@@ -58,7 +58,7 @@ objects.
 It answers: "which actor is this?"
 
 ```ts
-import { ActorRef } from "@factorialco/factorial-auth";
+import { ActorRef } from "@factorialco/auth";
 
 ActorRef.employee("123");
 ActorRef.company("42");
@@ -88,7 +88,7 @@ happened through a become/act flow, `act` points to the actor chain that
 initiated it, and `actType` describes the relationship between those two nodes.
 
 ```ts
-import { ActorRef, ActType, IdentityChain } from "@factorialco/factorial-auth";
+import { ActorRef, ActType, IdentityChain } from "@factorialco/auth";
 
 const employee = ActorRef.employee("123");
 const admin = ActorRef.employee("999");
@@ -182,7 +182,7 @@ import {
   ExpiredToken,
   TokenError,
   OidcDiscoveryFetchError,
-} from "@factorialco/factorial-auth";
+} from "@factorialco/auth";
 
 try {
   const claims = await auth.decodeAccessToken(token);
@@ -218,7 +218,7 @@ for the lifetime of your process/worker rather than constructing one per request
 ### Server request handler (Express-style)
 
 ```ts
-import { FactorialAuth, extractBearerToken } from "@factorialco/factorial-auth";
+import { FactorialAuth, extractBearerToken } from "@factorialco/auth";
 
 const auth = new FactorialAuth({
   oidcDiscoveryUrl: process.env.FACTORIAL_OIDC_DISCOVERY_URL!,
@@ -256,7 +256,7 @@ The `act` claim is left as a raw object on the claims; parse it explicitly when
 you need the chain (e.g. staff-become / admin-become flows):
 
 ```ts
-import { IdentityChain } from "@factorialco/factorial-auth";
+import { IdentityChain } from "@factorialco/auth";
 
 const claims = await auth.decodeAccessToken(token);
 
