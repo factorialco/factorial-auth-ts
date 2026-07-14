@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { InvalidToken } from "@/auth/errors";
+import { z } from 'zod'
+import { InvalidToken } from '@/auth/errors'
 import {
   dropNullValues,
   optionalBoolean,
@@ -9,7 +9,7 @@ import {
   optionalStringArray,
   requiredInteger,
   requiredString,
-} from "@/auth/claims/fields";
+} from '@/auth/claims/fields'
 
 const accessTokenClaimsSchema = z.object({
   iss: requiredString,
@@ -28,19 +28,19 @@ const accessTokenClaimsSchema = z.object({
   acr: optionalString,
   auth_time: optionalInteger,
   act: optionalRecord,
-});
+})
 
-export type AccessTokenClaims = Readonly<z.infer<typeof accessTokenClaimsSchema>>;
+export type AccessTokenClaims = Readonly<z.infer<typeof accessTokenClaimsSchema>>
 
 /**
  * Parses a verified JWT payload into typed access token claims.
  */
 export function parseAccessTokenClaims(payload: Record<string, unknown>): AccessTokenClaims {
-  const result = accessTokenClaimsSchema.safeParse(dropNullValues(payload));
+  const result = accessTokenClaimsSchema.safeParse(dropNullValues(payload))
 
   if (!result.success) {
-    throw new InvalidToken(result.error.issues[0].message);
+    throw new InvalidToken(result.error.issues[0].message)
   }
 
-  return Object.freeze(result.data);
+  return Object.freeze(result.data)
 }

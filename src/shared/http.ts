@@ -1,11 +1,11 @@
 /** A transport-level failure: bad URL/scheme, network error, timeout, or non-2xx status. */
 export class HttpError extends Error {
-  name = "HttpError";
+  name = 'HttpError'
 }
 
 /** The response body could not be parsed as JSON. */
 export class HttpParseError extends Error {
-  name = "HttpParseError";
+  name = 'HttpParseError'
 }
 
 /**
@@ -19,50 +19,50 @@ export class HttpParseError extends Error {
  * its shape.
  */
 export async function fetchJson(url: string, timeoutMs: number): Promise<unknown> {
-  const body = await fetchBody(url, timeoutMs);
+  const body = await fetchBody(url, timeoutMs)
 
   try {
-    const parsed: unknown = JSON.parse(body);
-    return parsed;
+    const parsed: unknown = JSON.parse(body)
+    return parsed
   } catch (error) {
-    throw new HttpParseError(`Response from ${url} was not valid JSON`, { cause: error });
+    throw new HttpParseError(`Response from ${url} was not valid JSON`, { cause: error })
   }
 }
 
 async function fetchBody(url: string, timeoutMs: number): Promise<string> {
-  assertHttpUrl(url);
+  assertHttpUrl(url)
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, { signal: controller.signal })
     if (!response.ok) {
-      throw new HttpError(`Request to ${url} failed with status ${response.status}`);
+      throw new HttpError(`Request to ${url} failed with status ${response.status}`)
     }
-    return await response.text();
+    return await response.text()
   } catch (error) {
     if (error instanceof HttpError) {
-      throw error;
+      throw error
     }
     if (controller.signal.aborted) {
-      throw new HttpError(`Request to ${url} timed out after ${timeoutMs}ms`, { cause: error });
+      throw new HttpError(`Request to ${url} timed out after ${timeoutMs}ms`, { cause: error })
     }
-    throw new HttpError(`Request to ${url} failed`, { cause: error });
+    throw new HttpError(`Request to ${url} failed`, { cause: error })
   } finally {
-    clearTimeout(timeout);
+    clearTimeout(timeout)
   }
 }
 
 function assertHttpUrl(url: string): void {
-  let parsed: URL;
+  let parsed: URL
   try {
-    parsed = new URL(url);
+    parsed = new URL(url)
   } catch {
-    throw new HttpError(`Invalid URL: ${url}`);
+    throw new HttpError(`Invalid URL: ${url}`)
   }
 
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw new HttpError(`Unsupported URL scheme: ${parsed.protocol}`);
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new HttpError(`Unsupported URL scheme: ${parsed.protocol}`)
   }
 }

@@ -24,20 +24,20 @@ pnpm add @factorialco/auth
 ## Quick start
 
 ```ts
-import { FactorialAuth } from "@factorialco/auth";
+import { FactorialAuth } from '@factorialco/auth'
 
 const auth = new FactorialAuth({
-  oidcDiscoveryUrl: "https://id.factorialhr.com/.well-known/openid-configuration",
-  audience: "your-client-id",
-});
+  oidcDiscoveryUrl: 'https://id.factorialhr.com/.well-known/openid-configuration',
+  audience: 'your-client-id',
+})
 
 // Decode and verify an access token
-const accessTokenClaim = await auth.decodeAccessToken(token);
-console.log(accessTokenClaim.sub, accessTokenClaim.cid);
+const accessTokenClaim = await auth.decodeAccessToken(token)
+console.log(accessTokenClaim.sub, accessTokenClaim.cid)
 
 // Decode and verify an id token
-const idTokenClaim = await auth.decodeIdToken(token);
-console.log(idTokenClaim.sub, idTokenClaim.email);
+const idTokenClaim = await auth.decodeIdToken(token)
+console.log(idTokenClaim.sub, idTokenClaim.email)
 ```
 
 Construction is cheap and synchronous — no network calls happen until the first
@@ -58,11 +58,11 @@ objects.
 It answers: "which actor is this?"
 
 ```ts
-import { ActorRef } from "@factorialco/auth";
+import { ActorRef } from '@factorialco/auth'
 
-ActorRef.employee("123");
-ActorRef.company("42");
-ActorRef.system("domain-events-audit-log-creator");
+ActorRef.employee('123')
+ActorRef.company('42')
+ActorRef.system('domain-events-audit-log-creator')
 ```
 
 An actor ref serializes to a URI-like string:
@@ -88,26 +88,26 @@ happened through a become/act flow, `act` points to the actor chain that
 initiated it, and `actType` describes the relationship between those two nodes.
 
 ```ts
-import { ActorRef, ActType, IdentityChain } from "@factorialco/auth";
+import { ActorRef, ActType, IdentityChain } from '@factorialco/auth'
 
-const employee = ActorRef.employee("123");
-const admin = ActorRef.employee("999");
+const employee = ActorRef.employee('123')
+const admin = ActorRef.employee('999')
 
 const identityChain = IdentityChain.create({
   actor: employee,
   act: IdentityChain.create({ actor: admin }),
   actType: ActType.AdminBecome,
-});
+})
 
-identityChain.actor; // employee
-identityChain.act?.actor; // admin
+identityChain.actor // employee
+identityChain.act?.actor // admin
 ```
 
 The serialized shape is string-keyed and recursive (the wire form uses the
 snake_case `act_type`):
 
 ```ts
-identityChain.toObject();
+identityChain.toObject()
 
 // {
 //   actor: "f:act:employee:123",
@@ -121,8 +121,8 @@ Deserialization is capped at 3 nodes by default to keep parsing conservative;
 pass `maxDepth` to change it:
 
 ```ts
-IdentityChain.parse(serializedObject);
-IdentityChain.parse(serializedObject, { maxDepth: 5 });
+IdentityChain.parse(serializedObject)
+IdentityChain.parse(serializedObject, { maxDepth: 5 })
 ```
 
 ### How they relate
@@ -177,15 +177,10 @@ Error
 > `AuthError`, and are not affected by `tryDecode*`.
 
 ```ts
-import {
-  FactorialAuth,
-  ExpiredToken,
-  TokenError,
-  OidcDiscoveryFetchError,
-} from "@factorialco/auth";
+import { FactorialAuth, ExpiredToken, TokenError, OidcDiscoveryFetchError } from '@factorialco/auth'
 
 try {
-  const claims = await auth.decodeAccessToken(token);
+  const claims = await auth.decodeAccessToken(token)
 } catch (error) {
   if (error instanceof ExpiredToken) {
     // prompt a refresh
@@ -194,7 +189,7 @@ try {
   } else if (error instanceof OidcDiscoveryFetchError) {
     // upstream/infra problem -> 503
   } else {
-    throw error;
+    throw error
   }
 }
 ```
@@ -218,36 +213,36 @@ for the lifetime of your process/worker rather than constructing one per request
 ### Server request handler (Express-style)
 
 ```ts
-import { FactorialAuth, extractBearerToken } from "@factorialco/auth";
+import { FactorialAuth, extractBearerToken } from '@factorialco/auth'
 
 const auth = new FactorialAuth({
   oidcDiscoveryUrl: process.env.FACTORIAL_OIDC_DISCOVERY_URL!,
   audience: process.env.FACTORIAL_AUDIENCE!,
-});
+})
 
 app.use(async (req, res, next) => {
-  const token = extractBearerToken(req.headers.authorization ?? null);
+  const token = extractBearerToken(req.headers.authorization ?? null)
 
   if (token === null) {
-    return res.status(401).json({ error: "missing bearer token" });
+    return res.status(401).json({ error: 'missing bearer token' })
   }
 
-  const claims = await auth.tryDecodeAccessToken(token);
+  const claims = await auth.tryDecodeAccessToken(token)
 
   if (claims === null) {
-    return res.status(401).json({ error: "invalid token" });
+    return res.status(401).json({ error: 'invalid token' })
   }
 
-  req.claims = claims;
-  next();
-});
+  req.claims = claims
+  next()
+})
 ```
 
 ### Edge / Web `Request`
 
 ```ts
-const token = extractBearerToken(request.headers.get("authorization"));
-const claims = token ? await auth.tryDecodeAccessToken(token) : null;
+const token = extractBearerToken(request.headers.get('authorization'))
+const claims = token ? await auth.tryDecodeAccessToken(token) : null
 ```
 
 ### Delegated identity (`act` → `IdentityChain`)
@@ -256,13 +251,13 @@ The `act` claim is left as a raw object on the claims; parse it explicitly when
 you need the chain (e.g. staff-become / admin-become flows):
 
 ```ts
-import { IdentityChain } from "@factorialco/auth";
+import { IdentityChain } from '@factorialco/auth'
 
-const claims = await auth.decodeAccessToken(token);
+const claims = await auth.decodeAccessToken(token)
 
 if (claims.act) {
-  const chain = IdentityChain.parse(claims.act); // throws IdentityChainError if malformed
-  const effectiveActor = chain.actor; // ActorRef performing the action
+  const chain = IdentityChain.parse(claims.act) // throws IdentityChainError if malformed
+  const effectiveActor = chain.actor // ActorRef performing the action
 }
 ```
 

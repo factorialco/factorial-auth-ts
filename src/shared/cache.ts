@@ -1,7 +1,7 @@
 interface CacheEntry<T> {
-  value: T;
-  freshUntil: number;
-  staleUntil: number;
+  value: T
+  freshUntil: number
+  staleUntil: number
 }
 
 /**
@@ -12,48 +12,48 @@ interface CacheEntry<T> {
  * in-flight fetch (the analog of the gem's `Mutex`).
  */
 export class TtlCache<T> {
-  private entry: CacheEntry<T> | undefined;
-  private inFlight: Promise<T> | undefined;
+  private entry: CacheEntry<T> | undefined
+  private inFlight: Promise<T> | undefined
 
   constructor(
     private readonly fetcher: () => Promise<T>,
     private readonly freshTtlMs: number,
-    private readonly staleTtlMs: number,
+    private readonly staleTtlMs: number
   ) {}
 
   /** Returns the fresh cached value, or refreshes (serving stale on failure). */
   async get(): Promise<T> {
     if (this.entry !== undefined && Date.now() < this.entry.freshUntil) {
-      return this.entry.value;
+      return this.entry.value
     }
-    return this.refresh();
+    return this.refresh()
   }
 
   /** Forces a refetch, deduping concurrent callers into one in-flight fetch. */
   async refresh(): Promise<T> {
     if (this.inFlight !== undefined) {
-      return this.inFlight;
+      return this.inFlight
     }
 
-    this.inFlight = this.fetchAndStore();
+    this.inFlight = this.fetchAndStore()
     try {
-      return await this.inFlight;
+      return await this.inFlight
     } finally {
-      this.inFlight = undefined;
+      this.inFlight = undefined
     }
   }
 
   private async fetchAndStore(): Promise<T> {
     try {
-      const value = await this.fetcher();
-      const now = Date.now();
-      this.entry = { value, freshUntil: now + this.freshTtlMs, staleUntil: now + this.staleTtlMs };
-      return value;
+      const value = await this.fetcher()
+      const now = Date.now()
+      this.entry = { value, freshUntil: now + this.freshTtlMs, staleUntil: now + this.staleTtlMs }
+      return value
     } catch (error) {
       if (this.entry !== undefined && Date.now() < this.entry.staleUntil) {
-        return this.entry.value;
+        return this.entry.value
       }
-      throw error;
+      throw error
     }
   }
 }
