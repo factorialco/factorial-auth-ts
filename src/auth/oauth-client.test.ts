@@ -148,6 +148,75 @@ describe('FactorialOAuthClient', () => {
     expect((error as Error).message).not.toContain('refresh-b')
   })
 
+  it.each([
+    ['invalid_client', { error: 'invalid_client' }, 401, 'invalid_client'],
+    ['an unstructured server error', { message: 'bad gateway' }, 502, undefined],
+  ])(
+    'maps %s to a sanitized OAuth request error',
+    async (_case, body, status, expectedOAuthError) => {
+      const { jwk } = await makeKey()
+      serveDiscovery(jwk)
+      server.use(http.post(TOKEN_URL, () => HttpResponse.json(body, { status })))
+
+      const oauth = buildAuth().createOAuthClient({
+        clientId: 'one-runtime',
+        clientSecret: 'secret',
+      })
+      const error = await oauth.exchangeToken('token-a').catch((failure: unknown) => failure)
+
+      expect(error).toBeInstanceOf(OAuthRequestError)
+      expect(error).not.toBeInstanceOf(OAuthInvalidGrantError)
+      expect(error).toMatchObject({ status, oauthError: expectedOAuthError })
+      expect((error as Error).message).not.toContain('secret')
+      expect((error as Error).message).not.toContain('token-a')
+    }
+  )
+
+  it('maps token endpoint network failures to OAuthRequestError', async () => {
+    const { jwk } = await makeKey()
+    serveDiscovery(jwk)
+    server.use(http.post(TOKEN_URL, () => HttpResponse.error()))
+
+    const oauth = buildAuth().createOAuthClient({ clientId: 'one-runtime', clientSecret: 'secret' })
+    const error = await oauth.exchangeToken('token-a').catch((failure: unknown) => failure)
+
+    expect(error).toBeInstanceOf(OAuthRequestError)
+    expect(error).toMatchObject({ cause: expect.any(Error) })
+  })
+
+  it('rejects a malformed successful token response before verification', async () => {
+    const { jwk } = await makeKey()
+    serveDiscovery(jwk)
+    server.use(http.post(TOKEN_URL, () => HttpResponse.json({ expires_in: 3600 })))
+
+    const oauth = buildAuth().createOAuthClient({ clientId: 'one-runtime', clientSecret: 'secret' })
+
+    await expect(oauth.exchangeToken('token-a')).rejects.toThrow(OAuthTokenResponseError)
+  })
+
+  it('rejects a successful non-JSON token response', async () => {
+    const { jwk } = await makeKey()
+    serveDiscovery(jwk)
+    server.use(http.post(TOKEN_URL, () => HttpResponse.text('not json')))
+
+    const oauth = buildAuth().createOAuthClient({ clientId: 'one-runtime', clientSecret: 'secret' })
+
+    await expect(oauth.exchangeToken('token-a')).rejects.toThrow(OAuthTokenResponseError)
+  })
+
+  it('preserves status for a non-JSON OAuth failure without exposing its body', async () => {
+    const { jwk } = await makeKey()
+    serveDiscovery(jwk)
+    server.use(http.post(TOKEN_URL, () => HttpResponse.text('upstream details', { status: 502 })))
+
+    const oauth = buildAuth().createOAuthClient({ clientId: 'one-runtime', clientSecret: 'secret' })
+    const error = await oauth.exchangeToken('token-a').catch((failure: unknown) => failure)
+
+    expect(error).toBeInstanceOf(OAuthRequestError)
+    expect(error).toMatchObject({ status: 502 })
+    expect((error as Error).message).not.toContain('upstream details')
+  })
+
   it('rejects malformed and unverifiable successful token responses', async () => {
     const { jwk } = await makeKey()
     serveDiscovery(jwk)
@@ -176,6 +245,34 @@ describe('FactorialOAuthClient', () => {
       token_type_hint: 'refresh_token',
       client_id: 'one-runtime',
     })
+  })
+
+  it('treats a missing revocation endpoint as a no-op', async () => {
+    const { jwk } = await makeKey()
+    server.use(
+      http.get(DISCOVERY_URL, () =>
+        HttpResponse.json({
+          issuer: ISSUER,
+          jwks_uri: JWKS_URL,
+          token_endpoint: TOKEN_URL,
+        })
+      ),
+      http.get(JWKS_URL, () => HttpResponse.json({ keys: [jwk] }))
+    )
+
+    const oauth = buildAuth().createOAuthClient({ clientId: 'one-runtime', clientSecret: 'secret' })
+
+    await expect(oauth.revokeToken('refresh-b')).resolves.toBeUndefined()
+  })
+
+  it('maps discovery failures to OAuthRequestError', async () => {
+    server.use(http.get(DISCOVERY_URL, () => HttpResponse.error()))
+
+    const oauth = buildAuth().createOAuthClient({ clientId: 'one-runtime', clientSecret: 'secret' })
+    const error = await oauth.exchangeToken('token-a').catch((failure: unknown) => failure)
+
+    expect(error).toBeInstanceOf(OAuthRequestError)
+    expect(error).toMatchObject({ cause: expect.any(Error) })
   })
 
   it('requires configured client credentials and a discovered token endpoint', async () => {

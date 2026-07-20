@@ -7,7 +7,7 @@ import {
   OAuthTokenResponseError,
 } from '@/auth/errors'
 import type { DiscoveryClient } from '@/auth/oidc-discovery'
-import { HttpError, fetchText } from '@/shared/http'
+import { fetchText } from '@/shared/http'
 
 const TOKEN_EXCHANGE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:token-exchange'
 const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token'
@@ -158,8 +158,7 @@ class DefaultFactorialOAuthClient implements FactorialOAuthClient {
         body: new URLSearchParams(params).toString(),
       })
     } catch (error) {
-      const cause = error instanceof HttpError ? error : undefined
-      throw new OAuthRequestError('OAuth request failed', undefined, undefined, { cause })
+      throw new OAuthRequestError('OAuth request failed', undefined, undefined, { cause: error })
     }
 
     if (response.ok && allowEmptySuccess && response.body.trim().length === 0) return null

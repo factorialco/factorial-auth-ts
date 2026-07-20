@@ -62,9 +62,6 @@ export async function fetchText(
       body: await response.text(),
     })
   } catch (error) {
-    if (error instanceof HttpError) {
-      throw error
-    }
     if (controller.signal.aborted) {
       throw new HttpError(`Request to ${url} timed out after ${timeoutMs}ms`, { cause: error })
     }
