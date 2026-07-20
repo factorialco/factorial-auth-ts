@@ -57,3 +57,27 @@ export class InvalidAudience extends TokenError {
 export class ImmatureToken extends TokenError {
   name = 'ImmatureToken'
 }
+
+/** OAuth token/revocation endpoint could not be called successfully. */
+export class OAuthRequestError extends AuthError {
+  name = 'OAuthRequestError'
+
+  constructor(
+    message: string,
+    readonly status?: number,
+    readonly oauthError?: string,
+    options?: ErrorOptions
+  ) {
+    super(message, options)
+  }
+}
+
+/** OAuth rejected a token exchange or refresh credential as invalid. */
+export class OAuthInvalidGrantError extends OAuthRequestError {
+  name = 'OAuthInvalidGrantError'
+}
+
+/** OAuth returned a malformed or unverifiable token response. */
+export class OAuthTokenResponseError extends AuthError {
+  name = 'OAuthTokenResponseError'
+}

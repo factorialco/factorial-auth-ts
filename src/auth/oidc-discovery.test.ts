@@ -10,6 +10,8 @@ const DISCOVERY_URL = 'https://factorial-id.example.com/.well-known/openid-confi
 const validDocument = {
   issuer: 'https://factorial-id.example.com',
   jwks_uri: 'https://factorial-id.example.com/.well-known/jwks.json',
+  token_endpoint: 'https://factorial-id.example.com/oauth/token',
+  revocation_endpoint: 'https://factorial-id.example.com/oauth/revoke',
 }
 
 function buildClient() {
@@ -40,6 +42,8 @@ describe('DiscoveryClient', () => {
 
     expect(document.issuer).toBe(validDocument.issuer)
     expect(document.jwksUri).toBe(validDocument.jwks_uri)
+    expect(document.tokenEndpoint).toBe(validDocument.token_endpoint)
+    expect(document.revocationEndpoint).toBe(validDocument.revocation_endpoint)
   })
 
   it('caches the document across calls (one request)', async () => {

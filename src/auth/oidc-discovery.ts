@@ -8,8 +8,18 @@ const DISCOVERY_TTL_MS = 600_000 // 10 minutes
 const DISCOVERY_STALE_TTL_MS = 3_600_000 // 1 hour
 
 const discoveryDocumentSchema = z
-  .object({ issuer: z.string().min(1), jwks_uri: z.string().min(1) })
-  .transform((document) => ({ issuer: document.issuer, jwksUri: document.jwks_uri }))
+  .object({
+    issuer: z.string().min(1),
+    jwks_uri: z.string().min(1),
+    token_endpoint: z.string().min(1).optional(),
+    revocation_endpoint: z.string().min(1).optional(),
+  })
+  .transform((document) => ({
+    issuer: document.issuer,
+    jwksUri: document.jwks_uri,
+    tokenEndpoint: document.token_endpoint,
+    revocationEndpoint: document.revocation_endpoint,
+  }))
 
 export type DiscoveryDocument = z.infer<typeof discoveryDocumentSchema>
 

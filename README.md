@@ -1,6 +1,6 @@
 # @factorialco/auth
 
-Verify and decode [Factorial ID](https://github.com/factorialco/factorial/tree/main/factorial-id) JWT access and ID tokens.
+Verify Factorial ID tokens and call its OAuth token lifecycle endpoints.
 
 Library-agnostic: it depends only on [`jose`](https://github.com/panva/jose) and the global `fetch`,
 so it runs on **Node.js (>= 22.14)** and on **edge / serverless** runtimes.
@@ -9,6 +9,7 @@ so it runs on **Node.js (>= 22.14)** and on **edge / serverless** runtimes.
 - Verifies tokens (ES256 by default): **signature, `iss`, `aud`, `exp`, `nbf`**.
 - Refetches the JWKS automatically on **key rotation** (unknown `kid`).
 - Returns **strict, typed, immutable** claim objects.
+- Exchanges, refreshes, and revokes OAuth grants using the same cached discovery document.
 - Ships actor-identity value objects: `ActorRef`, `ActorType`, `IdentityChain`, `ActType`.
 - Provides a framework-agnostic `extractBearerToken` helper.
 
@@ -43,6 +44,28 @@ console.log(idTokenClaim.sub, idTokenClaim.email)
 Construction is cheap and synchronous — no network calls happen until the first
 `decode*`/`tryDecode*` call. Discovery and JWKS documents are fetched lazily and
 then cached (see [Caching & key rotation](#caching--key-rotation)).
+
+## OAuth token lifecycle
+
+Create an OAuth client from the verifier to reuse its discovery cache and verify
+every access token returned by the token endpoint:
+
+```ts
+const oauth = auth.createOAuthClient({
+  clientId: process.env.FACTORIAL_OAUTH_CLIENT_ID!,
+  clientSecret: process.env.FACTORIAL_OAUTH_CLIENT_SECRET!,
+})
+
+const delegatedGrant = await oauth.exchangeToken(subjectToken)
+const refreshedGrant = await oauth.refreshToken(delegatedGrant.refreshToken!)
+await oauth.revokeToken(refreshedGrant.refreshToken!)
+
+delegatedGrant.claims.client_id // verified claim from the returned access token
+```
+
+OAuth clients deliberately do not persist grants or decide when to refresh.
+Applications retain ownership of storage, encryption, concurrency, and
+authorization policy.
 
 ## Actor identity primitives
 
@@ -163,6 +186,9 @@ Error
 │  ├─ OidcDiscoveryParseError      // discovery document invalid JSON or missing issuer/jwks_uri
 │  ├─ JwksFetchError               // JWKS endpoint unreachable / non-2xx / timeout
 │  ├─ JwksParseError               // JWKS invalid JSON or malformed key set
+│  ├─ OAuthRequestError            // token/revocation request failed
+│  │  └─ OAuthInvalidGrantError     // exchange/refresh credential rejected
+│  ├─ OAuthTokenResponseError       // malformed or unverifiable OAuth response
 │  └─ TokenError                   // base for token-level failures
 │     ├─ InvalidToken              // bad signature, malformed token, unknown kid, or bad claim shape
 │     ├─ ExpiredToken              // exp check failed

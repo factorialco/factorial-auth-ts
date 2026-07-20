@@ -27,6 +27,7 @@ const accessTokenClaimsSchema = z.object({
   amr: optionalStringArray,
   acr: optionalString,
   auth_time: optionalInteger,
+  client_id: optionalString,
   act: optionalRecord,
 })
 

@@ -24,12 +24,14 @@ describe('parseAccessTokenClaims', () => {
       amr: ['pwd'],
       acr: 'urn:nist:params:authn:aal:1',
       auth_time: 1_699_999_940,
+      client_id: 'one-runtime',
       act: { sub: 'actor-1', act: { sub: 'staff-1' } },
     })
 
     expect(claims.sub).toBe('user-1')
     expect(claims.jti).toBe('jti-1')
     expect(claims.staff).toBe(true)
+    expect(claims.client_id).toBe('one-runtime')
     expect(claims.amr).toEqual(['pwd'])
     expect(claims.act).toEqual({ sub: 'actor-1', act: { sub: 'staff-1' } })
   })

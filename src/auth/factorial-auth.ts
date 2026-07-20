@@ -5,19 +5,27 @@ import { Decoder } from '@/auth/decoder'
 import { AuthError } from '@/auth/errors'
 import { JwksClient } from '@/auth/jwks'
 import { DiscoveryClient } from '@/auth/oidc-discovery'
+import {
+  createOAuthClient,
+  type FactorialOAuthClient,
+  type FactorialOAuthClientConfig,
+} from '@/auth/oauth-client'
 
 /**
  * Entry point for decoding and verifying Factorial ID tokens.
  */
 export class FactorialAuth {
   private readonly decoder: Decoder
+  private readonly discoveryClient: DiscoveryClient
+  private readonly httpTimeoutMs: number
 
   constructor(config: FactorialAuthConfig) {
     const validatedConfig = validateConfig(config)
-    const discoveryClient = new DiscoveryClient(validatedConfig)
-    const jwksClient = new JwksClient(validatedConfig, discoveryClient)
+    this.discoveryClient = new DiscoveryClient(validatedConfig)
+    this.httpTimeoutMs = validatedConfig.httpTimeoutMs
+    const jwksClient = new JwksClient(validatedConfig, this.discoveryClient)
 
-    this.decoder = new Decoder(validatedConfig, discoveryClient, jwksClient)
+    this.decoder = new Decoder(validatedConfig, this.discoveryClient, jwksClient)
   }
 
   /**
@@ -49,6 +57,16 @@ export class FactorialAuth {
    */
   tryDecodeIdToken(token: string): Promise<IdTokenClaims | null> {
     return nullOnAuthError(this.decodeIdToken(token))
+  }
+
+  /** Creates an OAuth client that reuses this verifier's OIDC discovery cache. */
+  createOAuthClient(config: FactorialOAuthClientConfig): FactorialOAuthClient {
+    return createOAuthClient(
+      config,
+      this.discoveryClient,
+      (token) => this.decodeAccessToken(token),
+      this.httpTimeoutMs
+    )
   }
 }
 
