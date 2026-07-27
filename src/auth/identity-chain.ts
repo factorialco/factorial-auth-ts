@@ -2,7 +2,7 @@ import { ActType, isActType } from './act-type'
 import { ActorRef, ActorRefError } from './actor-ref'
 import { isPresent, isRecord, isString } from '@/shared/utils'
 
-const DEFAULT_MAX_DEPTH = 3
+export const DEFAULT_IDENTITY_CHAIN_MAX_DEPTH = 3
 
 export class IdentityChainError extends Error {
   name = 'IdentityChainError'
@@ -60,7 +60,7 @@ export class IdentityChain {
     serialized: Record<string, unknown>,
     options: { maxDepth?: number } = {}
   ): IdentityChain {
-    const maxDepth = options.maxDepth ?? DEFAULT_MAX_DEPTH
+    const maxDepth = options.maxDepth ?? DEFAULT_IDENTITY_CHAIN_MAX_DEPTH
 
     if (maxDepth < 1) {
       throw new RangeError('Identity chain max depth must be positive')
@@ -96,6 +96,14 @@ export class IdentityChain {
     }
 
     return this.act.equals(other.act)
+  }
+
+  isBecome(): boolean {
+    return (
+      this.actType === ActType.AdminBecome ||
+      this.actType === ActType.StaffBecome ||
+      (this.act?.isBecome() ?? false)
+    )
   }
 }
 

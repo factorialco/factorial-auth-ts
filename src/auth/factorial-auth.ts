@@ -5,12 +5,14 @@ import { Decoder } from '@/auth/decoder'
 import { AuthError } from '@/auth/errors'
 import { JwksClient } from '@/auth/jwks'
 import { DiscoveryClient } from '@/auth/oidc-discovery'
+import { TokenClient } from '@/auth/token-client'
 
 /**
  * Entry point for decoding and verifying Factorial ID tokens.
  */
 export class FactorialAuth {
   private readonly decoder: Decoder
+  readonly tokenClient: TokenClient
 
   constructor(config: FactorialAuthConfig) {
     const validatedConfig = validateConfig(config)
@@ -18,6 +20,7 @@ export class FactorialAuth {
     const jwksClient = new JwksClient(validatedConfig, discoveryClient)
 
     this.decoder = new Decoder(validatedConfig, discoveryClient, jwksClient)
+    this.tokenClient = new TokenClient(validatedConfig, discoveryClient)
   }
 
   /**

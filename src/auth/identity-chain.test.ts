@@ -171,4 +171,27 @@ describe('IdentityChain', () => {
       expect(make().equals(new IdentityChain({ actor: employee }))).toBe(false)
     })
   })
+
+  describe('isBecome', () => {
+    it('finds become relationships anywhere in the chain', () => {
+      const delegated = new IdentityChain({
+        actor: employee,
+        act: new IdentityChain({
+          actor: admin,
+          act: new IdentityChain({ actor: staff }),
+          actType: ActType.StaffBecome,
+        }),
+        actType: ActType.Delegation,
+      })
+
+      expect(delegated.isBecome()).toBe(true)
+      expect(
+        new IdentityChain({
+          actor: employee,
+          act: new IdentityChain({ actor: admin }),
+          actType: ActType.Delegation,
+        }).isBecome()
+      ).toBe(false)
+    })
+  })
 })

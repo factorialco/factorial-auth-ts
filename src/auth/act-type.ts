@@ -4,6 +4,7 @@
 export const ActType = {
   AdminBecome: 'admin_become',
   StaffBecome: 'staff_become',
+  Delegation: 'delegation',
 } as const
 
 export type ActType = (typeof ActType)[keyof typeof ActType]

@@ -19,28 +19,43 @@ export class HttpParseError extends Error {
  * its shape.
  */
 export async function fetchJson(url: string, timeoutMs: number): Promise<unknown> {
-  const body = await fetchBody(url, timeoutMs)
+  const response = await fetchText(url, timeoutMs)
+  if (!response.ok) {
+    throw new HttpError(`Request to ${url} failed with status ${response.status}`)
+  }
 
   try {
-    const parsed: unknown = JSON.parse(body)
+    const parsed: unknown = JSON.parse(response.body)
     return parsed
   } catch (error) {
     throw new HttpParseError(`Response from ${url} was not valid JSON`, { cause: error })
   }
 }
 
-async function fetchBody(url: string, timeoutMs: number): Promise<string> {
+export type TextResponse = Readonly<{
+  ok: boolean
+  status: number
+  body: string
+}>
+
+/** Performs a bounded HTTP request and returns its status and text body. */
+export async function fetchText(
+  url: string,
+  timeoutMs: number,
+  init?: RequestInit
+): Promise<TextResponse> {
   assertHttpUrl(url)
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    const response = await fetch(url, { signal: controller.signal })
-    if (!response.ok) {
-      throw new HttpError(`Request to ${url} failed with status ${response.status}`)
+    const response = await fetch(url, { ...init, signal: controller.signal })
+    return {
+      ok: response.ok,
+      status: response.status,
+      body: await response.text(),
     }
-    return await response.text()
   } catch (error) {
     if (error instanceof HttpError) {
       throw error

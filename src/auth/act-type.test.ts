@@ -5,6 +5,7 @@ describe('isActType', () => {
   it('accepts known act types', () => {
     expect(isActType(ActType.AdminBecome)).toBe(true)
     expect(isActType('staff_become')).toBe(true)
+    expect(isActType('delegation')).toBe(true)
   })
 
   it('rejects unknown values', () => {

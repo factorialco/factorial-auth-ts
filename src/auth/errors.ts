@@ -18,6 +18,16 @@ export class OidcDiscoveryParseError extends AuthError {
   name = 'OidcDiscoveryParseError'
 }
 
+/** An OAuth token request failed. */
+export class TokenRequestError extends AuthError {
+  name = 'TokenRequestError'
+}
+
+/** An OAuth token response was malformed or unusable. */
+export class TokenResponseParseError extends AuthError {
+  name = 'TokenResponseParseError'
+}
+
 /** JWKS could not be downloaded from the configured endpoint. */
 export class JwksFetchError extends AuthError {
   name = 'JwksFetchError'

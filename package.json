@@ -1,7 +1,7 @@
 {
   "name": "@factorialco/auth",
   "version": "0.2.0",
-  "description": "Decode and verify Factorial ID JWT tokens.",
+  "description": "Verify Factorial ID tokens and request OAuth grants.",
   "keywords": [
     "authentication",
     "factorial",

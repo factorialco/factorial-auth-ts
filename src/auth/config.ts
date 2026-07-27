@@ -21,6 +21,10 @@ export interface FactorialAuthConfig {
   httpTimeoutMs?: number
   /** Whether to verify the `nbf` claim. Defaults to `true`. */
   requireNbf?: boolean
+  /** OAuth client identifier used by the token client. */
+  clientId?: string
+  /** OAuth client secret used by the token client. */
+  clientSecret?: string
 }
 
 const configSchema = z.object({
@@ -41,6 +45,8 @@ const configSchema = z.object({
     .positive('httpTimeoutMs must be greater than zero')
     .default(5000),
   requireNbf: z.boolean().default(true),
+  clientId: z.string().optional(),
+  clientSecret: z.string().optional(),
 }) satisfies z.ZodType<FactorialAuthConfig>
 
 export type FactorialAuthValidatedConfig = z.infer<typeof configSchema> & FactorialAuthConfig
