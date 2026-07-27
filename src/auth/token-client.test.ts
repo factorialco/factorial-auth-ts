@@ -270,4 +270,23 @@ describe('TokenClient', () => {
     expect((error as Error).message).not.toContain('sensitive-subject-token')
     expect((error as Error).message).not.toContain('client-secret')
   })
+
+  it('exposes the structured OAuth error without requiring message parsing', async () => {
+    serveDiscovery()
+    server.use(
+      http.post(TOKEN_ENDPOINT, () =>
+        HttpResponse.json(
+          { error: 'invalid_grant', error_description: 'Refresh token is invalid' },
+          { status: 400 }
+        )
+      )
+    )
+
+    const error = await buildAuth()
+      .tokenClient.refreshToken('expired-refresh-token')
+      .catch((failure: unknown) => failure)
+
+    expect(error).toBeInstanceOf(TokenRequestError)
+    expect(error).toMatchObject({ oauthError: 'invalid_grant' })
+  })
 })

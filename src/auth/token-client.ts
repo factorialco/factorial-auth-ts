@@ -104,8 +104,10 @@ export class TokenClient {
     }
 
     if (!response.ok) {
+      const errorDetails = tokenErrorDetails(response.body)
       throw new TokenRequestError(
-        `Token request failed with status ${response.status}${tokenErrorDescription(response.body)}`
+        `Token request failed with status ${response.status}${errorDetails.description}`,
+        { oauthError: errorDetails.oauthError }
       )
     }
 
@@ -166,19 +168,21 @@ function assertHttpsTokenEndpoint(tokenEndpoint: string): void {
   }
 }
 
-function tokenErrorDescription(rawBody: string): string {
+function tokenErrorDetails(rawBody: string): { description: string; oauthError?: string } {
   try {
     const body: unknown = JSON.parse(rawBody)
-    if (body === null || typeof body !== 'object' || Array.isArray(body)) return ''
+    if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+      return { description: '' }
+    }
 
     const error = Reflect.get(body, 'error')
     const description = Reflect.get(body, 'error_description')
-    if (typeof error !== 'string') return ''
+    if (typeof error !== 'string') return { description: '' }
 
     const details =
       typeof description === 'string' && description.length > 0 ? ` (${description})` : ''
-    return `: ${error}${details}`
+    return { description: `: ${error}${details}`, oauthError: error }
   } catch {
-    return ''
+    return { description: '' }
   }
 }

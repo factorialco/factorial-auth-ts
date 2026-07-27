@@ -21,6 +21,13 @@ export class OidcDiscoveryParseError extends AuthError {
 /** An OAuth token request failed. */
 export class TokenRequestError extends AuthError {
   name = 'TokenRequestError'
+
+  readonly oauthError?: string
+
+  constructor(message: string, options?: ErrorOptions & { oauthError?: string }) {
+    super(message, options)
+    this.oauthError = options?.oauthError
+  }
 }
 
 /** An OAuth token response was malformed or unusable. */
