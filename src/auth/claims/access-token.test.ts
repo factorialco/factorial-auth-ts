@@ -96,10 +96,15 @@ describe('parseAccessTokenClaims', () => {
       expect(() => parseAccessTokenClaims({ ...validPayload(), amr: 'pwd' })).toThrow(InvalidToken)
     })
 
-    it('rejects non-object amr entries', () => {
-      expect(() => parseAccessTokenClaims({ ...validPayload(), amr: ['pwd'] })).toThrow(
-        InvalidToken
-      )
+    it('accepts RFC authentication method strings', () => {
+      expect(parseAccessTokenClaims({ ...validPayload(), amr: ['pwd', 'otp'] }).amr).toEqual([
+        'pwd',
+        'otp',
+      ])
+    })
+
+    it('rejects unsupported amr entries', () => {
+      expect(() => parseAccessTokenClaims({ ...validPayload(), amr: [42] })).toThrow(InvalidToken)
     })
 
     it('rejects a non-object act claim', () => {

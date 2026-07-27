@@ -4,10 +4,10 @@ import { ActorRef } from '@/auth/actor-ref'
 import { ActClaims } from '@/auth/claims/act-claims'
 import {
   dropNullValues,
+  optionalAuthenticationMethods,
   optionalBoolean,
   optionalInteger,
   optionalRecord,
-  optionalRecordArray,
   optionalString,
   requiredInteger,
   requiredString,
@@ -32,7 +32,7 @@ const accessTokenClaimsSchema = z.object({
   eid: optionalString,
   cell: optionalString,
   scope: optionalString,
-  amr: optionalRecordArray,
+  amr: optionalAuthenticationMethods,
   acr: optionalString,
   auth_time: optionalInteger,
   client_id: optionalString,
@@ -55,7 +55,7 @@ export class AccessTokenClaims {
   readonly eid?: string
   readonly cell?: string
   readonly scope?: string
-  readonly amr?: Record<string, unknown>[]
+  readonly amr?: Array<string | Record<string, unknown>>
   readonly acr?: string
   readonly auth_time?: number
   readonly client_id?: string

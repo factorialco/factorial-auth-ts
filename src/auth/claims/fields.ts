@@ -24,7 +24,9 @@ export const optionalString = stringValue.optional()
 export const requiredInteger = integerValue
 export const optionalInteger = integerValue.optional()
 export const optionalBoolean = z.boolean().optional()
-export const optionalRecordArray = z.array(z.record(z.string(), z.unknown())).optional()
+export const optionalAuthenticationMethods = z
+  .array(z.union([z.string(), z.record(z.string(), z.unknown())]))
+  .optional()
 export const optionalRecord = z.record(z.string(), z.unknown()).optional()
 
 /**

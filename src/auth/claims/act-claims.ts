@@ -2,10 +2,10 @@ import { z } from 'zod'
 import { ActType } from '@/auth/act-type'
 import { ActorRef } from '@/auth/actor-ref'
 import {
-  optionalBoolean,
   dropNullValues,
+  optionalAuthenticationMethods,
+  optionalBoolean,
   optionalRecord,
-  optionalRecordArray,
   optionalString,
   requiredString,
 } from '@/auth/claims/fields'
@@ -25,7 +25,7 @@ const actClaimsSchema = z
     client_id: optionalString,
     staff: optionalBoolean,
     bt: optionalString,
-    amr: optionalRecordArray,
+    amr: optionalAuthenticationMethods,
     act: optionalRecord,
   })
   .strict()
@@ -41,7 +41,7 @@ export class ActClaims {
   readonly client_id?: string
   readonly staff?: boolean
   readonly bt?: string
-  readonly amr?: Record<string, unknown>[]
+  readonly amr?: Array<string | Record<string, unknown>>
   readonly act?: ActClaims
 
   private constructor(parsed: ParsedActClaims, act?: ActClaims) {
