@@ -16,17 +16,19 @@ import {
   IdentityChainError,
 } from '@/auth/identity-chain'
 
-const actClaimsSchema = z.object({
-  sub: requiredString,
-  eid: optionalString,
-  cid: optionalString,
-  cell: optionalString,
-  client_id: optionalString,
-  staff: optionalBoolean,
-  bt: optionalString,
-  amr: optionalStringArray,
-  act: optionalRecord,
-})
+const actClaimsSchema = z
+  .object({
+    sub: requiredString,
+    eid: optionalString,
+    cid: optionalString,
+    cell: optionalString,
+    client_id: optionalString,
+    staff: optionalBoolean,
+    bt: optionalString,
+    amr: optionalStringArray,
+    act: optionalRecord,
+  })
+  .strict()
 
 type ParsedActClaims = z.infer<typeof actClaimsSchema>
 

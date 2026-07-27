@@ -97,6 +97,15 @@ describe('parseAccessTokenClaims', () => {
     it('rejects a non-object act claim', () => {
       expect(() => parseAccessTokenClaims({ ...validPayload(), act: 'nope' })).toThrow(InvalidToken)
     })
+
+    it('rejects unknown nested actor claims', () => {
+      expect(() =>
+        parseAccessTokenClaims({
+          ...validPayload(),
+          act: { sub: 'actor-1', unexpected: 'value' },
+        })
+      ).toThrow(InvalidToken)
+    })
   })
 
   describe('required claims', () => {
