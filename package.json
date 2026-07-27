@@ -48,7 +48,7 @@
   "scripts": {
     "build": "tsup",
     "prepack": "pnpm build",
-    "prepare": "lefthook install",
+    "prepare": "node scripts/prepare.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
