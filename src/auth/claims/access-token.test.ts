@@ -24,7 +24,7 @@ describe('parseAccessTokenClaims', () => {
       eid: 'employee-1',
       cell: 'cell-1',
       scope: 'openid profile',
-      amr: ['pwd'],
+      amr: [{ type: 'password', auth_time: 1_699_999_940 }],
       acr: 'urn:nist:params:authn:aal:1',
       auth_time: 1_699_999_940,
       client_id: 'one-runtime',
@@ -32,6 +32,7 @@ describe('parseAccessTokenClaims', () => {
         sub: 'actor-1',
         eid: 'actor-employee-1',
         bt: 'admin',
+        amr: [{ type: 'eotp', auth_time: 1_699_999_950 }],
         act: { sub: 'staff-1', eid: 'staff-employee-1', bt: 'staff' },
       },
     })
@@ -39,9 +40,10 @@ describe('parseAccessTokenClaims', () => {
     expect(claims.sub).toBe('user-1')
     expect(claims.jti).toBe('jti-1')
     expect(claims.staff).toBe(true)
-    expect(claims.amr).toEqual(['pwd'])
+    expect(claims.amr).toEqual([{ type: 'password', auth_time: 1_699_999_940 }])
     expect(claims.client_id).toBe('one-runtime')
     expect(claims.act?.sub).toBe('actor-1')
+    expect(claims.act?.amr).toEqual([{ type: 'eotp', auth_time: 1_699_999_950 }])
     expect(claims.act?.act?.sub).toBe('staff-1')
   })
 
@@ -92,6 +94,12 @@ describe('parseAccessTokenClaims', () => {
 
     it('rejects a non-array amr claim', () => {
       expect(() => parseAccessTokenClaims({ ...validPayload(), amr: 'pwd' })).toThrow(InvalidToken)
+    })
+
+    it('rejects non-object amr entries', () => {
+      expect(() => parseAccessTokenClaims({ ...validPayload(), amr: ['pwd'] })).toThrow(
+        InvalidToken
+      )
     })
 
     it('rejects a non-object act claim', () => {

@@ -5,8 +5,8 @@ import {
   optionalBoolean,
   dropNullValues,
   optionalRecord,
+  optionalRecordArray,
   optionalString,
-  optionalStringArray,
   requiredString,
 } from '@/auth/claims/fields'
 import { InvalidToken } from '@/auth/errors'
@@ -25,7 +25,7 @@ const actClaimsSchema = z
     client_id: optionalString,
     staff: optionalBoolean,
     bt: optionalString,
-    amr: optionalStringArray,
+    amr: optionalRecordArray,
     act: optionalRecord,
   })
   .strict()
@@ -41,7 +41,7 @@ export class ActClaims {
   readonly client_id?: string
   readonly staff?: boolean
   readonly bt?: string
-  readonly amr?: string[]
+  readonly amr?: Record<string, unknown>[]
   readonly act?: ActClaims
 
   private constructor(parsed: ParsedActClaims, act?: ActClaims) {
