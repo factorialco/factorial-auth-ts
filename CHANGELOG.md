@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/factorialco/factorial-auth-ts/compare/auth-v0.2.0...auth-v0.3.0) (2026-07-28)
+
+
+### Features
+
+* sync Ruby factorial-auth capabilities ([#9](https://github.com/factorialco/factorial-auth-ts/issues/9)) ([d6d1b19](https://github.com/factorialco/factorial-auth-ts/commit/d6d1b19cc0098b832d772416f71f2f90552ca250))
+
 ## [0.2.0](https://github.com/factorialco/factorial-auth-ts/compare/auth-v0.1.0...auth-v0.2.0) (2026-07-14)
 
 
