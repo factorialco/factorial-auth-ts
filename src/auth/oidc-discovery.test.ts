@@ -34,12 +34,44 @@ describe('DiscoveryClient', () => {
   })
 
   it('fetches and parses the discovery document', async () => {
-    server.use(http.get(DISCOVERY_URL, () => HttpResponse.json(validDocument)))
+    server.use(
+      http.get(DISCOVERY_URL, () =>
+        HttpResponse.json({
+          ...validDocument,
+          token_endpoint: 'https://factorial-id.example.com/oauth/token',
+        })
+      )
+    )
 
     const document = await buildClient().currentDocument()
 
     expect(document.issuer).toBe(validDocument.issuer)
     expect(document.jwksUri).toBe(validDocument.jwks_uri)
+    expect(document.tokenEndpoint).toBe('https://factorial-id.example.com/oauth/token')
+  })
+
+  it('allows discovery without a token endpoint', async () => {
+    server.use(http.get(DISCOVERY_URL, () => HttpResponse.json(validDocument)))
+    expect((await buildClient().currentDocument()).tokenEndpoint).toBeUndefined()
+  })
+
+  it('treats an explicit null token endpoint as absent', async () => {
+    server.use(
+      http.get(DISCOVERY_URL, () => HttpResponse.json({ ...validDocument, token_endpoint: null }))
+    )
+    expect((await buildClient().currentDocument()).tokenEndpoint).toBeUndefined()
+  })
+
+  it('rejects a non-HTTPS discovery URL', async () => {
+    const client = new DiscoveryClient(
+      validateConfig({
+        oidcDiscoveryUrl: 'http://factorial-id.example.com/.well-known/openid-configuration',
+        audience: 'factorial',
+      })
+    )
+
+    await expect(client.currentDocument()).rejects.toThrow(OidcDiscoveryFetchError)
+    await expect(client.currentDocument()).rejects.toThrow(/must use HTTPS/)
   })
 
   it('caches the document across calls (one request)', async () => {

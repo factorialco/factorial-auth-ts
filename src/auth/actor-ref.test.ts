@@ -31,8 +31,9 @@ describe('ActorRef', () => {
       expect(() => ActorRef.parse('f:act:employee:')).toThrow('Actor ref id must be present')
     })
 
-    it('trims leading and trailing spaces from the id', () => {
-      expect(ActorRef.parse('f:act:employee: 123').id).toBe('123')
+    it('rejects ids with leading or trailing spaces instead of trimming', () => {
+      expect(() => ActorRef.parse('f:act:employee: 123')).toThrow(ActorRefError)
+      expect(() => ActorRef.employee(' 123 ')).toThrow(ActorRefError)
     })
 
     it('rejects ids that look like email addresses', () => {

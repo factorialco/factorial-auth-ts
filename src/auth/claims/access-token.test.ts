@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { ActType } from '@/auth/act-type'
+import { ActorRef } from '@/auth/actor-ref'
 import { parseAccessTokenClaims } from '@/auth/claims/access-token'
 import { InvalidToken } from '@/auth/errors'
+import { IdentityChain, IdentityChainError } from '@/auth/identity-chain'
 
 const validPayload = () => ({
   iss: 'https://factorial-id.example.com',
@@ -21,17 +24,27 @@ describe('parseAccessTokenClaims', () => {
       eid: 'employee-1',
       cell: 'cell-1',
       scope: 'openid profile',
-      amr: ['pwd'],
+      amr: [{ type: 'password', auth_time: 1_699_999_940 }],
       acr: 'urn:nist:params:authn:aal:1',
       auth_time: 1_699_999_940,
-      act: { sub: 'actor-1', act: { sub: 'staff-1' } },
+      client_id: 'one-runtime',
+      act: {
+        sub: 'actor-1',
+        eid: 'actor-employee-1',
+        bt: 'admin',
+        amr: [{ type: 'eotp', auth_time: 1_699_999_950 }],
+        act: { sub: 'staff-1', eid: 'staff-employee-1', bt: 'staff' },
+      },
     })
 
     expect(claims.sub).toBe('user-1')
     expect(claims.jti).toBe('jti-1')
     expect(claims.staff).toBe(true)
-    expect(claims.amr).toEqual(['pwd'])
-    expect(claims.act).toEqual({ sub: 'actor-1', act: { sub: 'staff-1' } })
+    expect(claims.amr).toEqual([{ type: 'password', auth_time: 1_699_999_940 }])
+    expect(claims.client_id).toBe('one-runtime')
+    expect(claims.act?.sub).toBe('actor-1')
+    expect(claims.act?.amr).toEqual([{ type: 'eotp', auth_time: 1_699_999_950 }])
+    expect(claims.act?.act?.sub).toBe('staff-1')
   })
 
   it('leaves optional claims undefined when absent', () => {
@@ -83,8 +96,42 @@ describe('parseAccessTokenClaims', () => {
       expect(() => parseAccessTokenClaims({ ...validPayload(), amr: 'pwd' })).toThrow(InvalidToken)
     })
 
+    it('accepts RFC authentication method strings', () => {
+      expect(parseAccessTokenClaims({ ...validPayload(), amr: ['pwd', 'otp'] }).amr).toEqual([
+        'pwd',
+        'otp',
+      ])
+    })
+
+    it('rejects unsupported amr entries', () => {
+      expect(() => parseAccessTokenClaims({ ...validPayload(), amr: [42] })).toThrow(InvalidToken)
+    })
+
     it('rejects a non-object act claim', () => {
       expect(() => parseAccessTokenClaims({ ...validPayload(), act: 'nope' })).toThrow(InvalidToken)
+    })
+
+    it('ignores unknown nested actor claims like the gem does', () => {
+      const claims = parseAccessTokenClaims({
+        ...validPayload(),
+        act: { sub: 'actor-1', unexpected: 'value' },
+      })
+      expect(claims.act?.sub).toBe('actor-1')
+      expect(claims.act).not.toHaveProperty('unexpected')
+    })
+
+    it('rejects empty-string and exponent-notation integer claims', () => {
+      expect(() => parseAccessTokenClaims({ ...validPayload(), nbf: '' })).toThrow(InvalidToken)
+      expect(() => parseAccessTokenClaims({ ...validPayload(), exp: '1e3' })).toThrow(InvalidToken)
+    })
+  })
+
+  describe('error messages', () => {
+    it('names the failing claim', () => {
+      const { sub, ...withoutSub } = validPayload()
+      void sub
+      expect(() => parseAccessTokenClaims(withoutSub)).toThrow(/sub/)
+      expect(() => parseAccessTokenClaims({ ...validPayload(), exp: '1e3' })).toThrow(/exp/)
     })
   })
 
@@ -93,6 +140,132 @@ describe('parseAccessTokenClaims', () => {
       const { sub, ...withoutSub } = validPayload()
       void sub
       expect(() => parseAccessTokenClaims(withoutSub)).toThrow(InvalidToken)
+    })
+  })
+
+  describe('authenticated identity', () => {
+    it('derives an employee identity chain', () => {
+      const claims = parseAccessTokenClaims({ ...validPayload(), eid: 'employee-1' })
+
+      expect(claims.actorRef?.equals(ActorRef.employee('employee-1'))).toBe(true)
+      expect(
+        claims.identityChain()?.equals(
+          new IdentityChain({
+            actor: ActorRef.employee('employee-1'),
+          })
+        )
+      ).toBe(true)
+    })
+
+    it('derives nested admin and staff become identity', () => {
+      const claims = parseAccessTokenClaims({
+        ...validPayload(),
+        eid: 'employee-1',
+        act: {
+          sub: 'admin-user',
+          eid: 'admin-employee',
+          bt: 'admin',
+          act: {
+            sub: 'staff-user',
+            eid: 'staff-employee',
+            bt: 'staff',
+          },
+        },
+      })
+
+      const chain = claims.identityChain()
+      expect(chain?.actType).toBe(ActType.AdminBecome)
+      expect(chain?.act?.actor.equals(ActorRef.employee('admin-employee'))).toBe(true)
+      expect(chain?.act?.actType).toBe(ActType.StaffBecome)
+      expect(chain?.act?.act?.actor.equals(ActorRef.employee('staff-employee'))).toBe(true)
+      expect(chain?.isBecome()).toBe(true)
+    })
+
+    it('derives delegated and platform system identities', () => {
+      const delegated = parseAccessTokenClaims({
+        ...validPayload(),
+        eid: 'employee-1',
+        client_id: 'one-runtime',
+        act: { sub: 'one-runtime', client_id: 'one-runtime' },
+      }).identityChain()
+      const platform = parseAccessTokenClaims({
+        ...validPayload(),
+        sub: 'one-runtime',
+        client_id: 'one-runtime',
+      })
+
+      expect(delegated?.actType).toBe(ActType.Delegation)
+      expect(delegated?.act?.actor.equals(ActorRef.system('one-runtime'))).toBe(true)
+      expect(delegated?.isBecome()).toBe(false)
+      expect(platform.actorRef?.equals(ActorRef.system('one-runtime'))).toBe(true)
+    })
+
+    it('prefers the employee identity when both eid and a matching client_id are present', () => {
+      const claims = parseAccessTokenClaims({
+        ...validPayload(),
+        sub: 'one-runtime',
+        client_id: 'one-runtime',
+        eid: 'employee-1',
+      })
+
+      expect(claims.actorRef?.equals(ActorRef.employee('employee-1'))).toBe(true)
+    })
+
+    it('falls through an empty eid to the system identity', () => {
+      const claims = parseAccessTokenClaims({
+        ...validPayload(),
+        sub: 'one-runtime',
+        client_id: 'one-runtime',
+        eid: '',
+      })
+
+      expect(claims.actorRef?.equals(ActorRef.system('one-runtime'))).toBe(true)
+    })
+
+    it('throws when called with a non-positive max depth', () => {
+      const claims = parseAccessTokenClaims({ ...validPayload(), eid: 'employee-1' })
+
+      expect(() => claims.identityChain({ maxDepth: 0 })).toThrow(IdentityChainError)
+    })
+
+    it('does not derive a chain for incomplete or user-level identities', () => {
+      const incomplete = parseAccessTokenClaims({
+        ...validPayload(),
+        eid: 'employee-1',
+        act: { sub: 'one-runtime' },
+      })
+      const user = parseAccessTokenClaims(validPayload())
+
+      expect(incomplete.act?.actorRef).toBeNull()
+      expect(incomplete.identityChain()).toBeNull()
+      expect(user.actorRef).toBeNull()
+      expect(user.identityChain()).toBeNull()
+    })
+
+    it('rejects unknown become types and excessive depth', () => {
+      const unknown = parseAccessTokenClaims({
+        ...validPayload(),
+        eid: 'employee-1',
+        act: { sub: 'actor', eid: 'actor-1', bt: 'unknown' },
+      })
+      const deep = parseAccessTokenClaims({
+        ...validPayload(),
+        eid: 'employee-1',
+        act: {
+          sub: 'actor-1',
+          eid: 'actor-1',
+          bt: 'admin',
+          act: {
+            sub: 'actor-2',
+            eid: 'actor-2',
+            bt: 'staff',
+            act: { sub: 'actor-3', eid: 'actor-3', bt: 'admin' },
+          },
+        },
+      })
+
+      expect(() => unknown.identityChain()).toThrow(IdentityChainError)
+      expect(() => deep.identityChain()).toThrow('Reached maximum allowed identity chain depth')
     })
   })
 })

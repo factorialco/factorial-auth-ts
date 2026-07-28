@@ -18,6 +18,27 @@ export class OidcDiscoveryParseError extends AuthError {
   name = 'OidcDiscoveryParseError'
 }
 
+/** An OAuth token request failed. */
+export class TokenRequestError extends AuthError {
+  name = 'TokenRequestError'
+
+  /** OAuth `error` code from the token endpoint's error response, when present. */
+  readonly oauthError?: string
+  /** HTTP status of the token endpoint's response; absent for transport failures. */
+  readonly status?: number
+
+  constructor(message: string, options?: ErrorOptions & { oauthError?: string; status?: number }) {
+    super(message, options)
+    this.oauthError = options?.oauthError
+    this.status = options?.status
+  }
+}
+
+/** An OAuth token response was malformed or unusable. */
+export class TokenResponseParseError extends AuthError {
+  name = 'TokenResponseParseError'
+}
+
 /** JWKS could not be downloaded from the configured endpoint. */
 export class JwksFetchError extends AuthError {
   name = 'JwksFetchError'

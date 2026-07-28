@@ -1,6 +1,6 @@
 # @factorialco/auth
 
-Verify and decode [Factorial ID](https://github.com/factorialco/factorial/tree/main/factorial-id) JWT access and ID tokens.
+Verify Factorial ID tokens and request OAuth grants from its token endpoint.
 
 Library-agnostic: it depends only on [`jose`](https://github.com/panva/jose) and the global `fetch`,
 so it runs on **Node.js (>= 22.14)** and on **edge / serverless** runtimes.
@@ -9,6 +9,7 @@ so it runs on **Node.js (>= 22.14)** and on **edge / serverless** runtimes.
 - Verifies tokens (ES256 by default): **signature, `iss`, `aud`, `exp`, `nbf`**.
 - Refetches the JWKS automatically on **key rotation** (unknown `kid`).
 - Returns **strict, typed, immutable** claim objects.
+- Requests platform, delegated, and refreshed OAuth tokens through discovered endpoints.
 - Ships actor-identity value objects: `ActorRef`, `ActorType`, `IdentityChain`, `ActType`.
 - Provides a framework-agnostic `extractBearerToken` helper.
 
@@ -41,8 +42,43 @@ console.log(idTokenClaim.sub, idTokenClaim.email)
 ```
 
 Construction is cheap and synchronous — no network calls happen until the first
-`decode*`/`tryDecode*` call. Discovery and JWKS documents are fetched lazily and
+decode or token-client call. Discovery and JWKS documents are fetched lazily and
 then cached (see [Caching & key rotation](#caching--key-rotation)).
+
+## OAuth token client
+
+Configure client credentials on the same `FactorialAuth` instance. Credentials
+are only required when a token-client operation is called:
+
+```ts
+const auth = new FactorialAuth({
+  oidcDiscoveryUrl: process.env.FACTORIAL_OIDC_DISCOVERY_URL!,
+  audience: 'factorial',
+  clientId: process.env.FACTORIAL_OAUTH_CLIENT_ID,
+  clientSecret: process.env.FACTORIAL_OAUTH_CLIENT_SECRET,
+})
+
+const platform = await auth.tokenClient.platformToken({
+  audience: 'factorial-backend',
+  cell: 'eu1',
+})
+
+const delegated = await auth.tokenClient.delegatedToken({
+  subjectToken,
+  audience: 'factorial-backend',
+})
+
+const refreshed = await auth.tokenClient.refreshToken(refreshToken)
+```
+
+The token client parses the OAuth response but does not decode, verify, persist,
+refresh automatically, or revoke returned grants. Applications retain ownership
+of those lifecycle and authorization decisions.
+
+When the token endpoint answers with an OAuth error, the thrown
+`TokenRequestError` exposes the HTTP `status` and the OAuth `error` code as
+`oauthError`, so callers can branch without parsing the message. Redirects from
+the token endpoint are never followed.
 
 ## Actor identity primitives
 
@@ -161,6 +197,8 @@ Error
 │  ├─ ConfigurationError           // invalid FactorialAuthConfig (thrown by the constructor)
 │  ├─ OidcDiscoveryFetchError      // discovery endpoint unreachable / non-2xx / timeout
 │  ├─ OidcDiscoveryParseError      // discovery document invalid JSON or missing issuer/jwks_uri
+│  ├─ TokenRequestError            // OAuth token endpoint request failed
+│  ├─ TokenResponseParseError      // OAuth token response malformed or unusable
 │  ├─ JwksFetchError               // JWKS endpoint unreachable / non-2xx / timeout
 │  ├─ JwksParseError               // JWKS invalid JSON or malformed key set
 │  └─ TokenError                   // base for token-level failures
@@ -245,21 +283,21 @@ const token = extractBearerToken(request.headers.get('authorization'))
 const claims = token ? await auth.tryDecodeAccessToken(token) : null
 ```
 
-### Delegated identity (`act` → `IdentityChain`)
+### Authenticated identity from access-token claims
 
-The `act` claim is left as a raw object on the claims; parse it explicitly when
-you need the chain (e.g. staff-become / admin-become flows):
+Access-token claims derive actor references and recursive identity chains using
+the same employee, platform-principal, become, and delegation rules as the Ruby
+`factorial-auth` package:
 
 ```ts
-import { IdentityChain } from '@factorialco/auth'
-
 const claims = await auth.decodeAccessToken(token)
-
-if (claims.act) {
-  const chain = IdentityChain.parse(claims.act) // throws IdentityChainError if malformed
-  const effectiveActor = chain.actor // ActorRef performing the action
-}
+const actor = claims.actorRef
+const chain = claims.identityChain()
 ```
+
+`identityChain()` throws `IdentityChainError` when the `act` chain is deeper
+than the allowed maximum or carries an unknown `bt` value — even on a token
+that decoded successfully.
 
 ## Compatibility
 

@@ -15,12 +15,16 @@ export interface FactorialAuthConfig {
   /** Clock skew tolerance, in seconds, for `exp`/`nbf`. Defaults to `30`. */
   clockLeewaySeconds?: number
   /**
-   * Overall timeout for each discovery/JWKS HTTP request, in milliseconds.
-   * Defaults to `5000`.
+   * Overall timeout for each HTTP request (discovery, JWKS, and token
+   * endpoint), in milliseconds. Defaults to `5000`.
    */
   httpTimeoutMs?: number
   /** Whether to verify the `nbf` claim. Defaults to `true`. */
   requireNbf?: boolean
+  /** OAuth client identifier used by the token client. */
+  clientId?: string
+  /** OAuth client secret used by the token client. */
+  clientSecret?: string
 }
 
 const configSchema = z.object({
@@ -41,6 +45,8 @@ const configSchema = z.object({
     .positive('httpTimeoutMs must be greater than zero')
     .default(5000),
   requireNbf: z.boolean().default(true),
+  clientId: z.string().optional(),
+  clientSecret: z.string().optional(),
 }) satisfies z.ZodType<FactorialAuthConfig>
 
 export type FactorialAuthValidatedConfig = z.infer<typeof configSchema> & FactorialAuthConfig
