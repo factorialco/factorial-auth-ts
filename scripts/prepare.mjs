@@ -10,7 +10,8 @@ function runPnpm(...args) {
   execFileSync(process.execPath, [packageManager, ...args], { stdio: 'inherit' })
 }
 
-runPnpm('build')
+// `run build` works across package managers; bare `build` is not an npm command.
+runPnpm('run', 'build')
 
 if (existsSync('.git')) {
   runPnpm('exec', 'lefthook', 'install')

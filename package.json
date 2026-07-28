@@ -47,7 +47,6 @@
   },
   "scripts": {
     "build": "tsup",
-    "prepack": "pnpm build",
     "prepare": "node scripts/prepare.mjs",
     "test": "vitest run",
     "test:watch": "vitest",

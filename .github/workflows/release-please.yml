@@ -44,5 +44,5 @@ jobs:
       # Publish with the npm CLI (provenance + OIDC trusted publishing are
       # not available in pnpm). No NPM_TOKEN: npm exchanges the workflow's
       # OIDC identity for a short-lived credential and attaches provenance.
-      # The `prepack` hook builds the package before publishing.
+      # The `prepare` hook builds the package before publishing.
       - run: npm publish --provenance --access public
