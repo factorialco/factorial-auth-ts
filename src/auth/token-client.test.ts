@@ -213,40 +213,45 @@ describe('TokenClient', () => {
   })
 
   it('rejects malformed token responses and optional fields', async () => {
-    expect(() =>
-      parseTokenResponse(JSON.stringify({ token_type: 'Bearer', expires_in: 900 }))
-    ).toThrow(TokenResponseParseError)
-    expect(() =>
-      parseTokenResponse(JSON.stringify({ ...tokenResponse, refresh_token: 123 }))
-    ).toThrow(TokenResponseParseError)
-    expect(() => parseTokenResponse('not json')).toThrow(TokenResponseParseError)
+    expect(() => parseTokenResponse({ token_type: 'Bearer', expires_in: 900 })).toThrow(
+      TokenResponseParseError
+    )
+    expect(() => parseTokenResponse({ ...tokenResponse, refresh_token: 123 })).toThrow(
+      TokenResponseParseError
+    )
+    expect(() => parseTokenResponse('not an object')).toThrow(TokenResponseParseError)
+  })
+
+  it('rejects a successful response whose body is not JSON', async () => {
+    serveDiscovery()
+    server.use(http.post(TOKEN_ENDPOINT, () => HttpResponse.text('not json')))
+
+    await expect(
+      buildAuth().tokenClient.platformToken({ audience: 'factorial-backend' })
+    ).rejects.toThrow(TokenResponseParseError)
   })
 
   it('parses all optional response fields and treats null as absent', () => {
     expect(
-      parseTokenResponse(
-        JSON.stringify({
-          ...tokenResponse,
-          refresh_token: 'refresh-token',
-          created_at: 1_700_000_000,
-          issued_token_type: 'urn:ietf:params:oauth:token-type:access_token',
-        })
-      )
+      parseTokenResponse({
+        ...tokenResponse,
+        refresh_token: 'refresh-token',
+        created_at: 1_700_000_000,
+        issued_token_type: 'urn:ietf:params:oauth:token-type:access_token',
+      })
     ).toMatchObject({
       refreshToken: 'refresh-token',
       createdAt: 1_700_000_000,
       issuedTokenType: 'urn:ietf:params:oauth:token-type:access_token',
     })
     expect(
-      parseTokenResponse(
-        JSON.stringify({
-          ...tokenResponse,
-          scope: null,
-          refresh_token: null,
-          created_at: null,
-          issued_token_type: null,
-        })
-      )
+      parseTokenResponse({
+        ...tokenResponse,
+        scope: null,
+        refresh_token: null,
+        created_at: null,
+        issued_token_type: null,
+      })
     ).toMatchObject({
       scope: undefined,
       refreshToken: undefined,

@@ -7,7 +7,7 @@ import {
   TokenResponseParseError,
 } from '@/auth/errors'
 import type { DiscoveryClient } from '@/auth/oidc-discovery'
-import { HttpError, fetchText } from '@/shared/http'
+import { HttpError, HttpParseError, fetchJson } from '@/shared/http'
 
 const ACCESS_TOKEN_TYPE = 'urn:ietf:params:oauth:token-type:access_token'
 const TOKEN_EXCHANGE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:token-exchange'
@@ -86,9 +86,9 @@ export class TokenClient {
 
     assertHttpsTokenEndpoint(tokenEndpoint)
 
-    let response
+    let json: unknown
     try {
-      response = await fetchText(tokenEndpoint, this.config.httpTimeoutMs, {
+      json = await fetchJson(tokenEndpoint, this.config.httpTimeoutMs, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -97,21 +97,23 @@ export class TokenClient {
         body: new URLSearchParams(params).toString(),
       })
     } catch (error) {
+      if (error instanceof HttpError && error.status !== undefined) {
+        const { description, oauthError } = tokenErrorDetails(error.body)
+        throw new TokenRequestError(
+          `Token request failed with status ${error.status}${description}`,
+          { oauthError }
+        )
+      }
       if (error instanceof HttpError) {
         throw new TokenRequestError('Token request failed', { cause: error })
+      }
+      if (error instanceof HttpParseError) {
+        throw new TokenResponseParseError('Invalid token response payload', { cause: error })
       }
       throw error
     }
 
-    if (!response.ok) {
-      const errorDetails = tokenErrorDetails(response.body)
-      throw new TokenRequestError(
-        `Token request failed with status ${response.status}${errorDetails.description}`,
-        { oauthError: errorDetails.oauthError }
-      )
-    }
-
-    return parseTokenResponse(response.body)
+    return parseTokenResponse(json)
   }
 
   private clientCredentials(): { client_id: string; client_secret: string } {
@@ -129,15 +131,8 @@ export class TokenClient {
   }
 }
 
-export function parseTokenResponse(rawResponse: string): TokenResponse {
-  let json: unknown
-  try {
-    json = JSON.parse(rawResponse)
-  } catch (error) {
-    throw new TokenResponseParseError('Invalid token response payload', { cause: error })
-  }
-
-  const result = tokenResponseSchema.safeParse(json)
+export function parseTokenResponse(payload: unknown): TokenResponse {
+  const result = tokenResponseSchema.safeParse(payload)
   if (!result.success) {
     throw new TokenResponseParseError('Invalid token response payload', {
       cause: result.error,
@@ -168,21 +163,16 @@ function assertHttpsTokenEndpoint(tokenEndpoint: string): void {
   }
 }
 
-function tokenErrorDetails(rawBody: string): { description: string; oauthError?: string } {
-  try {
-    const body: unknown = JSON.parse(rawBody)
-    if (body === null || typeof body !== 'object' || Array.isArray(body)) {
-      return { description: '' }
-    }
-
-    const error = Reflect.get(body, 'error')
-    const description = Reflect.get(body, 'error_description')
-    if (typeof error !== 'string') return { description: '' }
-
-    const details =
-      typeof description === 'string' && description.length > 0 ? ` (${description})` : ''
-    return { description: `: ${error}${details}`, oauthError: error }
-  } catch {
+function tokenErrorDetails(body: unknown): { description: string; oauthError?: string } {
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
     return { description: '' }
   }
+
+  const error = Reflect.get(body, 'error')
+  const description = Reflect.get(body, 'error_description')
+  if (typeof error !== 'string') return { description: '' }
+
+  const details =
+    typeof description === 'string' && description.length > 0 ? ` (${description})` : ''
+  return { description: `: ${error}${details}`, oauthError: error }
 }
