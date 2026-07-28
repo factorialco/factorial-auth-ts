@@ -3,6 +3,7 @@ import { ActType } from '@/auth/act-type'
 import { ActorRef } from '@/auth/actor-ref'
 import {
   dropNullValues,
+  firstIssueMessage,
   optionalAuthenticationMethods,
   optionalBoolean,
   optionalRecord,
@@ -16,19 +17,19 @@ import {
   IdentityChainError,
 } from '@/auth/identity-chain'
 
-const actClaimsSchema = z
-  .object({
-    sub: requiredString,
-    eid: optionalString,
-    cid: optionalString,
-    cell: optionalString,
-    client_id: optionalString,
-    staff: optionalBoolean,
-    bt: optionalString,
-    amr: optionalAuthenticationMethods,
-    act: optionalRecord,
-  })
-  .strict()
+// Not .strict(): unknown claims are ignored like the Ruby gem does, so factorial-id
+// can add act sub-claims without breaking older consumers.
+const actClaimsSchema = z.object({
+  sub: requiredString,
+  eid: optionalString,
+  cid: optionalString,
+  cell: optionalString,
+  client_id: optionalString,
+  staff: optionalBoolean,
+  bt: optionalString,
+  amr: optionalAuthenticationMethods,
+  act: optionalRecord,
+})
 
 type ParsedActClaims = z.infer<typeof actClaimsSchema>
 
@@ -57,10 +58,11 @@ export class ActClaims {
     Object.freeze(this)
   }
 
+  /** Parses an `act` object from an already-verified JWT payload; performs no signature checks. */
   static parse(payload: Record<string, unknown>): ActClaims {
     const result = actClaimsSchema.safeParse(dropNullValues(payload))
     if (!result.success) {
-      throw new InvalidToken(result.error.issues[0].message)
+      throw new InvalidToken(firstIssueMessage(result.error))
     }
 
     const nested = result.data.act === undefined ? undefined : ActClaims.parse(result.data.act)
@@ -92,20 +94,21 @@ export class ActClaims {
     return new IdentityChain({
       actor,
       act: act ?? undefined,
-      actType: this.act === undefined ? undefined : this.act.actType(),
+      actType: this.act === undefined ? undefined : actTypeFromBt(this.act.bt),
     })
   }
+}
 
-  private actType(): ActType {
-    switch (this.bt) {
-      case 'admin':
-        return ActType.AdminBecome
-      case 'staff':
-        return ActType.StaffBecome
-      case undefined:
-        return ActType.Delegation
-      default:
-        throw new IdentityChainError(`Unknown bt value: ${JSON.stringify(this.bt)}`)
-    }
+/** Maps the `bt` claim to the relationship between a node's actor and its `act` actor. */
+export function actTypeFromBt(bt: string | undefined): ActType {
+  switch (bt) {
+    case 'admin':
+      return ActType.AdminBecome
+    case 'staff':
+      return ActType.StaffBecome
+    case undefined:
+      return ActType.Delegation
+    default:
+      throw new IdentityChainError(`Unknown bt value: ${JSON.stringify(bt)}`)
   }
 }

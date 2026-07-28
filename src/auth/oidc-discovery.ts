@@ -11,7 +11,12 @@ const discoveryDocumentSchema = z
   .object({
     issuer: z.string().min(1),
     jwks_uri: z.string().min(1),
-    token_endpoint: z.string().min(1).optional(),
+    token_endpoint: z
+      .string()
+      .min(1)
+      .nullable()
+      .optional()
+      .transform((value) => value ?? undefined),
   })
   .transform((document) => ({
     issuer: document.issuer,
@@ -37,10 +42,14 @@ export class DiscoveryClient {
   }
 
   private async fetchDocument(): Promise<DiscoveryDocument> {
+    assertHttpsDiscoveryUrl(this.config.oidcDiscoveryUrl)
+
     let json: unknown
 
     try {
-      json = await fetchJson(this.config.oidcDiscoveryUrl, this.config.httpTimeoutMs)
+      json = await fetchJson(this.config.oidcDiscoveryUrl, this.config.httpTimeoutMs, {
+        headers: { Accept: 'application/json' },
+      })
     } catch (error) {
       if (error instanceof HttpParseError) {
         throw new OidcDiscoveryParseError('OIDC discovery document is not valid JSON', {
@@ -57,10 +66,29 @@ export class DiscoveryClient {
 
     if (!result.success) {
       throw new OidcDiscoveryParseError(
-        'OIDC discovery document is missing a valid issuer or jwks_uri'
+        'OIDC discovery document is missing a valid issuer, jwks_uri, or token_endpoint'
       )
     }
 
     return result.data
+  }
+}
+
+/**
+ * The discovery document is the trust root for issuer, JWKS, and token endpoint;
+ * fetching it over plain http would let an on-path attacker swap all three.
+ */
+function assertHttpsDiscoveryUrl(discoveryUrl: string): void {
+  let parsed: URL
+  try {
+    parsed = new URL(discoveryUrl)
+  } catch (error) {
+    throw new OidcDiscoveryFetchError(`Invalid OIDC discovery URL: ${discoveryUrl}`, {
+      cause: error,
+    })
+  }
+
+  if (parsed.protocol !== 'https:') {
+    throw new OidcDiscoveryFetchError(`OIDC discovery URL must use HTTPS: ${discoveryUrl}`)
   }
 }

@@ -9,9 +9,10 @@ export class ActorRefError extends Error {
 const MAX_ID_LENGTH = 255
 const ID_FORMAT = /^[A-Za-z0-9][A-Za-z0-9_.:-]*$/
 
+// No .trim(): the gem rejects ids with surrounding whitespace instead of silently
+// normalizing them, and trimming would break parse/toString round-tripping.
 const idSchema = z
   .string()
-  .trim()
   .min(1, 'Actor ref id must be present')
   .max(MAX_ID_LENGTH, `Actor ref id cannot be longer than ${MAX_ID_LENGTH} characters`)
   .regex(ID_FORMAT, 'Invalid actor ref id')

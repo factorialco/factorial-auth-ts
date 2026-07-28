@@ -111,13 +111,27 @@ describe('parseAccessTokenClaims', () => {
       expect(() => parseAccessTokenClaims({ ...validPayload(), act: 'nope' })).toThrow(InvalidToken)
     })
 
-    it('rejects unknown nested actor claims', () => {
-      expect(() =>
-        parseAccessTokenClaims({
-          ...validPayload(),
-          act: { sub: 'actor-1', unexpected: 'value' },
-        })
-      ).toThrow(InvalidToken)
+    it('ignores unknown nested actor claims like the gem does', () => {
+      const claims = parseAccessTokenClaims({
+        ...validPayload(),
+        act: { sub: 'actor-1', unexpected: 'value' },
+      })
+      expect(claims.act?.sub).toBe('actor-1')
+      expect(claims.act).not.toHaveProperty('unexpected')
+    })
+
+    it('rejects empty-string and exponent-notation integer claims', () => {
+      expect(() => parseAccessTokenClaims({ ...validPayload(), nbf: '' })).toThrow(InvalidToken)
+      expect(() => parseAccessTokenClaims({ ...validPayload(), exp: '1e3' })).toThrow(InvalidToken)
+    })
+  })
+
+  describe('error messages', () => {
+    it('names the failing claim', () => {
+      const { sub, ...withoutSub } = validPayload()
+      void sub
+      expect(() => parseAccessTokenClaims(withoutSub)).toThrow(/sub/)
+      expect(() => parseAccessTokenClaims({ ...validPayload(), exp: '1e3' })).toThrow(/exp/)
     })
   })
 
@@ -184,6 +198,34 @@ describe('parseAccessTokenClaims', () => {
       expect(delegated?.act?.actor.equals(ActorRef.system('one-runtime'))).toBe(true)
       expect(delegated?.isBecome()).toBe(false)
       expect(platform.actorRef?.equals(ActorRef.system('one-runtime'))).toBe(true)
+    })
+
+    it('prefers the employee identity when both eid and a matching client_id are present', () => {
+      const claims = parseAccessTokenClaims({
+        ...validPayload(),
+        sub: 'one-runtime',
+        client_id: 'one-runtime',
+        eid: 'employee-1',
+      })
+
+      expect(claims.actorRef?.equals(ActorRef.employee('employee-1'))).toBe(true)
+    })
+
+    it('falls through an empty eid to the system identity', () => {
+      const claims = parseAccessTokenClaims({
+        ...validPayload(),
+        sub: 'one-runtime',
+        client_id: 'one-runtime',
+        eid: '',
+      })
+
+      expect(claims.actorRef?.equals(ActorRef.system('one-runtime'))).toBe(true)
+    })
+
+    it('throws when called with a non-positive max depth', () => {
+      const claims = parseAccessTokenClaims({ ...validPayload(), eid: 'employee-1' })
+
+      expect(() => claims.identityChain({ maxDepth: 0 })).toThrow(IdentityChainError)
     })
 
     it('does not derive a chain for incomplete or user-level identities', () => {

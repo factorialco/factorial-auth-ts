@@ -22,11 +22,15 @@ export class OidcDiscoveryParseError extends AuthError {
 export class TokenRequestError extends AuthError {
   name = 'TokenRequestError'
 
+  /** OAuth `error` code from the token endpoint's error response, when present. */
   readonly oauthError?: string
+  /** HTTP status of the token endpoint's response; absent for transport failures. */
+  readonly status?: number
 
-  constructor(message: string, options?: ErrorOptions & { oauthError?: string }) {
+  constructor(message: string, options?: ErrorOptions & { oauthError?: string; status?: number }) {
     super(message, options)
     this.oauthError = options?.oauthError
+    this.status = options?.status
   }
 }
 

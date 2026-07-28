@@ -45,7 +45,9 @@ export class JwksClient {
 
     let json: unknown
     try {
-      json = await fetchJson(jwksUri, this.config.httpTimeoutMs)
+      json = await fetchJson(jwksUri, this.config.httpTimeoutMs, {
+        headers: { Accept: 'application/json' },
+      })
     } catch (error) {
       if (error instanceof HttpParseError) {
         throw new JwksParseError('JWKS response is not valid JSON', { cause: error })

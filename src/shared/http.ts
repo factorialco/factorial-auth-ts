@@ -29,6 +29,10 @@ export class HttpParseError extends Error {
  * when a successful body is not valid JSON, so callers can distinguish "couldn't
  * reach it" from "it returned garbage". Returns the parsed value as `unknown` —
  * callers validate its shape.
+ *
+ * Redirects are never followed: a 3xx response surfaces as an HttpError. Requests
+ * may carry credentials in the body, and silently re-sending them to a redirect
+ * target (potentially cross-origin or downgraded to http) must not happen.
  */
 export async function fetchJson(
   url: string,
@@ -43,7 +47,7 @@ export async function fetchJson(
   let response: Response
   let body: string
   try {
-    response = await fetch(url, { ...init, signal: controller.signal })
+    response = await fetch(url, { ...init, signal: controller.signal, redirect: 'manual' })
     body = await response.text()
   } catch (error) {
     if (controller.signal.aborted) {

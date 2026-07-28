@@ -51,7 +51,7 @@ export class TokenClient {
     private readonly discoveryClient: DiscoveryClient
   ) {}
 
-  refreshToken(refreshToken: string): Promise<TokenResponse> {
+  async refreshToken(refreshToken: string): Promise<TokenResponse> {
     return this.requestToken({
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
@@ -59,7 +59,7 @@ export class TokenClient {
     })
   }
 
-  platformToken(options: { audience: string; cell?: string }): Promise<TokenResponse> {
+  async platformToken(options: { audience: string; cell?: string }): Promise<TokenResponse> {
     return this.requestToken({
       grant_type: 'client_credentials',
       ...this.clientCredentials(),
@@ -68,7 +68,10 @@ export class TokenClient {
     })
   }
 
-  delegatedToken(options: { subjectToken: string; audience: string }): Promise<TokenResponse> {
+  async delegatedToken(options: {
+    subjectToken: string
+    audience: string
+  }): Promise<TokenResponse> {
     return this.requestToken({
       grant_type: TOKEN_EXCHANGE_GRANT_TYPE,
       subject_token: options.subjectToken,
@@ -101,7 +104,7 @@ export class TokenClient {
         const { description, oauthError } = tokenErrorDetails(error.body)
         throw new TokenRequestError(
           `Token request failed with status ${error.status}${description}`,
-          { oauthError }
+          { oauthError, status: error.status }
         )
       }
       if (error instanceof HttpError) {

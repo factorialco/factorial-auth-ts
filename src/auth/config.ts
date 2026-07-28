@@ -15,8 +15,8 @@ export interface FactorialAuthConfig {
   /** Clock skew tolerance, in seconds, for `exp`/`nbf`. Defaults to `30`. */
   clockLeewaySeconds?: number
   /**
-   * Overall timeout for each discovery/JWKS HTTP request, in milliseconds.
-   * Defaults to `5000`.
+   * Overall timeout for each HTTP request (discovery, JWKS, and token
+   * endpoint), in milliseconds. Defaults to `5000`.
    */
   httpTimeoutMs?: number
   /** Whether to verify the `nbf` claim. Defaults to `true`. */

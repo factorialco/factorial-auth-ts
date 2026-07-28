@@ -6,10 +6,13 @@ import { z } from 'zod'
 const stringValue = z.union([z.string(), z.number(), z.boolean()]).transform(String)
 
 /**
- * Coerce a number or a numeric string into a number. Matches Ruby `Ingeger()`
+ * Coerce a number or a decimal integer string into a number, mirroring Ruby
+ * `Integer()`. Plain `Number()` is too lenient here: it turns `""` into 0 and
+ * accepts exponent notation, which Ruby rejects — dangerous for `exp`/`nbf`.
  */
 const integerValue = z.union([z.number(), z.string()]).transform((value, ctx) => {
-  const parsed = Number(value)
+  const parsed =
+    typeof value === 'string' ? (/^\s*[+-]?\d+\s*$/.test(value) ? Number(value) : NaN) : value
 
   if (!Number.isInteger(parsed)) {
     ctx.addIssue({ code: 'custom', message: 'must be an integer' })
@@ -35,4 +38,11 @@ export const optionalRecord = z.record(z.string(), z.unknown()).optional()
  */
 export function dropNullValues(payload: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(payload).filter(([, value]) => value !== null))
+}
+
+/** Formats the first zod issue with the claim it belongs to, e.g. `sub: Invalid input`. */
+export function firstIssueMessage(error: z.ZodError): string {
+  const issue = error.issues[0]
+  const path = issue.path.join('.')
+  return path.length > 0 ? `${path}: ${issue.message}` : issue.message
 }

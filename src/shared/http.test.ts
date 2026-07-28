@@ -62,6 +62,22 @@ describe('fetchJson', () => {
     expect(submittedBody).toBe('a=1')
   })
 
+  it('does not follow redirects: a 3xx surfaces as HttpError with its status', async () => {
+    server.use(
+      http.get(ENDPOINT, () =>
+        HttpResponse.text(null, {
+          status: 307,
+          headers: { Location: 'https://elsewhere.example.com/data' },
+        })
+      )
+    )
+
+    const error = await fetchJson(ENDPOINT, 5000).catch((failure: unknown) => failure)
+
+    expect(error).toBeInstanceOf(HttpError)
+    expect(error).toMatchObject({ status: 307 })
+  })
+
   it('throws HttpError on a network error', async () => {
     server.use(http.get(ENDPOINT, () => HttpResponse.error()))
     await expect(fetchJson(ENDPOINT, 5000)).rejects.toThrow(HttpError)

@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { ActType } from '@/auth/act-type'
 import { ActorRef } from '@/auth/actor-ref'
-import { ActClaims } from '@/auth/claims/act-claims'
+import { ActClaims, actTypeFromBt } from '@/auth/claims/act-claims'
 import {
   dropNullValues,
+  firstIssueMessage,
   optionalAuthenticationMethods,
   optionalBoolean,
   optionalInteger,
@@ -82,10 +82,11 @@ export class AccessTokenClaims {
     Object.freeze(this)
   }
 
+  /** Parses an already-verified JWT payload; performs no signature or lifetime checks. */
   static parse(payload: Record<string, unknown>): AccessTokenClaims {
     const result = accessTokenClaimsSchema.safeParse(dropNullValues(payload))
     if (!result.success) {
-      throw new InvalidToken(result.error.issues[0].message)
+      throw new InvalidToken(firstIssueMessage(result.error))
     }
 
     const act = result.data.act === undefined ? undefined : ActClaims.parse(result.data.act)
@@ -117,7 +118,7 @@ export class AccessTokenClaims {
     return new IdentityChain({
       actor,
       act: act ?? undefined,
-      actType: this.act === undefined ? undefined : actTypeFor(this.act.bt),
+      actType: this.act === undefined ? undefined : actTypeFromBt(this.act.bt),
     })
   }
 }
@@ -125,17 +126,4 @@ export class AccessTokenClaims {
 /** Parses a verified JWT payload into typed access-token claims. */
 export function parseAccessTokenClaims(payload: Record<string, unknown>): AccessTokenClaims {
   return AccessTokenClaims.parse(payload)
-}
-
-function actTypeFor(bt: string | undefined): ActType {
-  switch (bt) {
-    case 'admin':
-      return ActType.AdminBecome
-    case 'staff':
-      return ActType.StaffBecome
-    case undefined:
-      return ActType.Delegation
-    default:
-      throw new IdentityChainError(`Unknown bt value: ${JSON.stringify(bt)}`)
-  }
 }

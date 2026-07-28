@@ -167,12 +167,12 @@ describe('TokenClient', () => {
       clientId: 'client-id',
     })
 
-    expect(() => missingId.tokenClient.platformToken({ audience: 'factorial-backend' })).toThrow(
-      ConfigurationError
-    )
-    expect(() =>
+    await expect(
+      missingId.tokenClient.platformToken({ audience: 'factorial-backend' })
+    ).rejects.toThrow(ConfigurationError)
+    await expect(
       missingSecret.tokenClient.platformToken({ audience: 'factorial-backend' })
-    ).toThrow(ConfigurationError)
+    ).rejects.toThrow(ConfigurationError)
   })
 
   it('requires a discovered HTTPS token endpoint', async () => {
@@ -186,6 +186,31 @@ describe('TokenClient', () => {
     await expect(
       buildAuth().tokenClient.platformToken({ audience: 'factorial-backend' })
     ).rejects.toThrow(/Token endpoint must use HTTPS/)
+
+    server.resetHandlers()
+    serveDiscovery('not a url')
+    await expect(
+      buildAuth().tokenClient.platformToken({ audience: 'factorial-backend' })
+    ).rejects.toThrow(TokenRequestError)
+  })
+
+  it('does not follow token endpoint redirects', async () => {
+    serveDiscovery()
+    server.use(
+      http.post(TOKEN_ENDPOINT, () =>
+        HttpResponse.text(null, {
+          status: 307,
+          headers: { Location: 'https://attacker.example.com/oauth/token' },
+        })
+      )
+    )
+
+    const error = await buildAuth()
+      .tokenClient.platformToken({ audience: 'factorial-backend' })
+      .catch((failure: unknown) => failure)
+
+    expect(error).toBeInstanceOf(TokenRequestError)
+    expect(error).toMatchObject({ status: 307 })
   })
 
   it('maps network and non-success responses to token request errors', async () => {
@@ -292,6 +317,6 @@ describe('TokenClient', () => {
       .catch((failure: unknown) => failure)
 
     expect(error).toBeInstanceOf(TokenRequestError)
-    expect(error).toMatchObject({ oauthError: 'invalid_grant' })
+    expect(error).toMatchObject({ oauthError: 'invalid_grant', status: 400 })
   })
 })

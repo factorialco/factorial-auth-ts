@@ -75,6 +75,11 @@ The token client parses the OAuth response but does not decode, verify, persist,
 refresh automatically, or revoke returned grants. Applications retain ownership
 of those lifecycle and authorization decisions.
 
+When the token endpoint answers with an OAuth error, the thrown
+`TokenRequestError` exposes the HTTP `status` and the OAuth `error` code as
+`oauthError`, so callers can branch without parsing the message. Redirects from
+the token endpoint are never followed.
+
 ## Actor identity primitives
 
 `ActorRef` and `IdentityChain` are small value objects for
@@ -289,6 +294,10 @@ const claims = await auth.decodeAccessToken(token)
 const actor = claims.actorRef
 const chain = claims.identityChain()
 ```
+
+`identityChain()` throws `IdentityChainError` when the `act` chain is deeper
+than the allowed maximum or carries an unknown `bt` value — even on a token
+that decoded successfully.
 
 ## Compatibility
 
