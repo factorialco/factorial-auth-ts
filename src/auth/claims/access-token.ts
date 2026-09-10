@@ -97,6 +97,16 @@ export class AccessTokenClaims {
     if (this.eid !== undefined && this.eid.length > 0) {
       return ActorRef.employee(this.eid)
     }
+
+    const serializedActorRef = ActorRef.tryParse(this.sub)
+    if (serializedActorRef !== null) {
+      if (serializedActorRef.isSystem() && serializedActorRef.id !== this.client_id) {
+        return null
+      }
+
+      return serializedActorRef
+    }
+
     if (this.client_id !== undefined && this.client_id.length > 0 && this.sub === this.client_id) {
       return ActorRef.system(this.sub)
     }

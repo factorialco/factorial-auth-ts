@@ -295,6 +295,11 @@ const actor = claims.actorRef
 const chain = claims.identityChain()
 ```
 
+Canonical actor subjects, including nested `act.sub` claims, use the serialized
+`f:act:<type>:<id>` form. A system actor is accepted only when its id matches the
+`client_id` on the same claim object. Legacy system actors whose raw `sub`
+equals `client_id` remain supported during migration.
+
 `identityChain()` throws `IdentityChainError` when the `act` chain is deeper
 than the allowed maximum or carries an unknown `bt` value — even on a token
 that decoded successfully.
