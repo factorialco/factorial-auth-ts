@@ -42,18 +42,45 @@ describe('ActClaims', () => {
     expect(claims.amr).toEqual(['pwd', { type: 'eotp' }])
   })
 
-  it('derives employee and system actors with employee precedence', () => {
+  it('derives employee and canonical system actors with employee precedence', () => {
     expect(
-      ActClaims.parse({ sub: 'runtime', client_id: 'runtime', eid: 'employee-1' }).actorRef?.equals(
-        ActorRef.employee('employee-1')
-      )
+      ActClaims.parse({
+        sub: 'f:act:system:runtime',
+        client_id: 'runtime',
+        eid: 'employee-1',
+      }).actorRef?.equals(ActorRef.employee('employee-1'))
     ).toBe(true)
     expect(
-      ActClaims.parse({ sub: 'runtime', client_id: 'runtime' }).actorRef?.equals(
+      ActClaims.parse({ sub: 'f:act:system:runtime', client_id: 'runtime' }).actorRef?.equals(
         ActorRef.system('runtime')
       )
     ).toBe(true)
     expect(ActClaims.parse({ sub: 'user-1' }).actorRef).toBeNull()
+  })
+
+  it('supports legacy system actor subjects that equal the client id', () => {
+    const claims = ActClaims.parse({ sub: 'runtime', client_id: 'runtime' })
+
+    expect(claims.actorRef?.equals(ActorRef.system('runtime'))).toBe(true)
+  })
+
+  it.each([undefined, 'another-runtime'])(
+    'rejects a canonical system actor not bound to client_id %s',
+    (clientId) => {
+      const claims = ActClaims.parse({
+        sub: 'f:act:system:runtime',
+        client_id: clientId,
+      })
+
+      expect(claims.actorRef).toBeNull()
+      expect(claims.identityChain()).toBeNull()
+    }
+  )
+
+  it('derives a canonical company actor subject', () => {
+    const claims = ActClaims.parse({ sub: 'f:act:company:company-1' })
+
+    expect(claims.actorRef?.equals(ActorRef.company('company-1'))).toBe(true)
   })
 
   it('maps bt values to act types', () => {

@@ -181,16 +181,16 @@ describe('parseAccessTokenClaims', () => {
       expect(chain?.isBecome()).toBe(true)
     })
 
-    it('derives delegated and platform system identities', () => {
+    it('derives delegated and canonical platform system identities', () => {
       const delegated = parseAccessTokenClaims({
         ...validPayload(),
         eid: 'employee-1',
         client_id: 'one-runtime',
-        act: { sub: 'one-runtime', client_id: 'one-runtime' },
+        act: { sub: 'f:act:system:one-runtime', client_id: 'one-runtime' },
       }).identityChain()
       const platform = parseAccessTokenClaims({
         ...validPayload(),
-        sub: 'one-runtime',
+        sub: 'f:act:system:one-runtime',
         client_id: 'one-runtime',
       })
 
@@ -198,6 +198,39 @@ describe('parseAccessTokenClaims', () => {
       expect(delegated?.act?.actor.equals(ActorRef.system('one-runtime'))).toBe(true)
       expect(delegated?.isBecome()).toBe(false)
       expect(platform.actorRef?.equals(ActorRef.system('one-runtime'))).toBe(true)
+    })
+
+    it('supports legacy platform subjects that equal the client id', () => {
+      const claims = parseAccessTokenClaims({
+        ...validPayload(),
+        sub: 'one-runtime',
+        client_id: 'one-runtime',
+      })
+
+      expect(claims.actorRef?.equals(ActorRef.system('one-runtime'))).toBe(true)
+    })
+
+    it.each([undefined, 'another-runtime'])(
+      'rejects a canonical system subject not bound to client_id %s',
+      (clientId) => {
+        const claims = parseAccessTokenClaims({
+          ...validPayload(),
+          sub: 'f:act:system:one-runtime',
+          client_id: clientId,
+        })
+
+        expect(claims.actorRef).toBeNull()
+        expect(claims.identityChain()).toBeNull()
+      }
+    )
+
+    it('derives a canonical company actor subject', () => {
+      const claims = parseAccessTokenClaims({
+        ...validPayload(),
+        sub: 'f:act:company:company-1',
+      })
+
+      expect(claims.actorRef?.equals(ActorRef.company('company-1'))).toBe(true)
     })
 
     it('prefers the employee identity when both eid and a matching client_id are present', () => {
